@@ -39,8 +39,15 @@ function SquadColumn({
   onConfirmSquad: (player: PlayerId) => void;
   onTimeout: (player: PlayerId) => void;
 }) {
-  const accent = player === "p1" ? "text-p1" : "text-p2";
-  const [timeLeft, setTimeLeft] = useState(TIMER_CONFIG.squadSeconds);
+  const isP1 = player === "p1";
+
+  const accent = isP1 ? "text-p1" : "text-p2";
+  const border = isP1 ? "border-p1" : "border-p2";
+  const background = isP1 ? "bg-p1" : "bg-p2";
+
+  const [timeLeft, setTimeLeft] = useState(
+    TIMER_CONFIG.squadSeconds
+  );
 
   useEffect(() => {
     if (confirmed) return;
@@ -48,46 +55,196 @@ function SquadColumn({
       onTimeout(player);
       return;
     }
-    const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+
+    const id = setTimeout(
+      () => setTimeLeft((t) => t - 1),
+      1000
+    );
+
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, confirmed]);
+  const selectedAgents = squad.map(
+    (id) => roster.find((agent) => agent.id === id)
+  );
 
   return (
-    <div className="flex flex-col gap-3 flex-1 items-center">
-      <span className={`text-sm font-pixel ${accent}`}>
-        {displayName(player).toUpperCase()} — SELECT 3 ({squad.length}/3)
-      </span>
-      <span className={`font-pixel text-sm ${!confirmed && timeLeft <= 10 ? "text-p2" : "text-text-muted"}`}>
-        {confirmed ? "LOCKED" : `0:${timeLeft.toString().padStart(2, "0")}`}
-      </span>
-      <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-        {roster.map((a) => {
-          const inSquad = squad.includes(a.id);
-          const isEligible = eligible(a.id);
-          return (
-            <AgentCard
-              key={a.id}
-              agent={a}
-              unavailable={!confirmed && !inSquad && (!isEligible || squad.length >= 3)}
-              cooldown={grayed[a.id] ?? 0}
-              selection={inSquad ? player : "none"}
-              onClick={confirmed ? undefined : () => onToggleAgent(player, a)}
-              size={64}
-            />
-          );
-        })}
+    <section
+      className={`
+        flex flex-col min-w-0
+        border-t-4 ${border}
+        bg-[#141420]
+      `}
+    >
+      {/* PLAYER HEADER */}
+      <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#303044]">
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className={`font-pixel text-lg ${accent}`}>
+            {displayName(player).toUpperCase()}
+          </span>
+
+          <span className="text-xs text-text-muted uppercase tracking-widest">
+            Squad Selection
+          </span>
+        </div>
+
+        {/* TIMER */}
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-[10px] font-pixel text-text-muted">
+            {confirmed ? "STATUS" : "TIME LEFT"}
+          </span>
+
+          <span
+            className={`
+              font-pixel text-2xl
+              ${
+                confirmed
+                  ? accent
+                  : timeLeft <= 10
+                  ? "text-p2"
+                  : "text-text-primary"
+              }
+            `}
+          >
+            {confirmed
+              ? "LOCKED"
+              : `0:${timeLeft.toString().padStart(2, "0")}`}
+          </span>
+        </div>
       </div>
-      <button
-        onClick={() => onConfirmSquad(player)}
-        disabled={confirmed || squad.length !== 3}
-        className={`px-8 py-2 font-pixel font-bold text-sm text-white tracking-widest transition-opacity ${
-          player === "p1" ? "bg-p1" : "bg-p2"
-        } ${confirmed || squad.length !== 3 ? "opacity-20 cursor-not-allowed" : "hover:opacity-80"}`}
-      >
-        {confirmed ? "LOCKED IN" : "CONFIRM SQUAD"}
-      </button>
-    </div>
+
+      {/* SELECTED SQUAD */}
+      <div className="px-5 pt-5 pb-6">
+        <div className="flex items-center justify-between mb-4">
+          <span className="font-pixel text-sm text-text-primary">
+            SELECTED SQUAD
+          </span>
+
+          <span className={`font-pixel text-sm ${accent}`}>
+            {squad.length}/3
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 max-w-[600px] mx-auto w-full">
+          {[0, 1, 2].map((index) => {
+            const agent = selectedAgents[index];
+
+            return (
+              <div
+                key={index}
+                className={`
+                  relative min-w-0 aspect-[3/4]
+                  border-2
+                  ${
+                    agent
+                      ? border
+                      : "border-[#353548]"
+                  }
+                  bg-[#1D1D2C]
+                  overflow-hidden
+                `}
+              >
+                {agent ? (
+                  <>
+                    <img
+                      src={`/agents/agents_full/${agent.id}_full.webp`}
+                      alt={agent.name}
+                      className="absolute inset-0 w-full h-full object-cover object-top"
+                    />
+
+                    {/* Agent nameplate */}
+                    <div
+                      className={`
+                        absolute bottom-0 inset-x-0
+                        ${background}
+                        px-1 py-2
+                        text-center
+                      `}
+                    >
+                      <span className="font-mono font-bold text-[20px] text-white break-words">
+                        {agent.name}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                    <span className="font-pixel text-4xl text-[#45455C]">
+                      +
+                    </span>
+
+                    <span className="font-pixel text-[10px] text-[#66667D]">
+                      SLOT {index + 1}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ROSTER AREA */}
+      <div className="flex-1 px-5 pb-5">
+        <div className="flex items-center justify-between mb-4 border-b border-[#303044] pb-2">
+          <span className="font-pixel text-sm text-text-primary">
+            YOUR ROSTER
+          </span>
+
+          <span className="text-xs text-text-muted">
+            {roster.length} AGENTS
+          </span>
+        </div>
+
+        <div className="grid grid-cols-6 gap-3 w-fit mx-auto">
+          {roster.map((agent) => {
+            const inSquad = squad.includes(agent.id);
+            const isEligible = eligible(agent.id);
+
+            return (
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                unavailable={
+                  !confirmed &&
+                  !inSquad &&
+                  (!isEligible || squad.length >= 3)
+                }
+                cooldown={grayed[agent.id] ?? 0}
+                selection={inSquad ? player : "none"}
+                onClick={
+                  confirmed
+                    ? undefined
+                    : () => onToggleAgent(player, agent)
+                }
+                size={128}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* CONFIRM BUTTON */}
+      <div className="px-5 pb-5 pt-3">
+        <button
+          onClick={() => onConfirmSquad(player)}
+          disabled={confirmed || squad.length !== 3}
+          className={`
+            w-full py-4
+            font-pixel font-bold text-sm
+            tracking-widest text-white
+            transition-opacity
+            ${background}
+            ${
+              confirmed || squad.length !== 3
+                ? "opacity-20 cursor-not-allowed"
+                : "hover:opacity-80"
+            }
+          `}
+        >
+          {confirmed ? "LOCKED IN" : "CONFIRM SQUAD"}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -104,9 +261,20 @@ export function SquadSelect({
   onTimeoutForPlayer,
 }: SquadSelectProps) {
   return (
-    <div className="flex flex-col items-center gap-8 py-8">
-      <span className="font-pixel text-text-primary text-xl">ROUND {round} — SQUAD SELECT</span>
-      <div className="flex gap-10 w-full justify-center">
+    <div className="w-full flex flex-col gap-6 py-3">
+      {/* ROUND HEADING */}
+      <div className="flex flex-col items-center gap-1">
+        <span className="font-pixel text-lg text-text-primary text-center">
+          ROUND {round}
+        </span>
+
+        <span className="font-pixel text-sm text-text-muted tracking-widest">
+          SQUAD SELECTION
+        </span>
+      </div>
+
+      {/* TWO PLAYER PANELS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full items-stretch">
         <SquadColumn
           player="p1"
           roster={rosters.p1}

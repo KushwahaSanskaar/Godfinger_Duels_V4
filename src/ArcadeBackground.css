@@ -1,0 +1,76 @@
+.arcade-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+
+    background-color: #0b0c18;
+
+}
+
+.arcade-bg::before {
+    content: "";
+    position: absolute;
+    inset: -8%;
+    background-image: linear-gradient(rgba(67, 51, 85, 0.2),
+            rgba(67, 51, 85, 0.2)),
+        url("../public/bg/zzz_site_background.webp");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: background-drift 30s ease-in-out infinite alternate;
+}
+
+.arcade-bg__color {
+    position: absolute;
+    inset: 0;
+    transition: clip-path 250ms steps(24, end);
+}
+
+/* P1 */
+.arcade-bg__color--p1 {
+    background-color: rgba(58, 142, 246, 0.1);
+
+    /* Hidden beyond the left edge */
+    clip-path: polygon(-15% 0%,
+            -15% 0%,
+            0% 100%,
+            0% 100%);
+}
+
+/* P2 */
+.arcade-bg__color--p2 {
+    background-color: rgba(230, 57, 70, 0.1);
+
+    /* Hidden beyond the right edge */
+    clip-path: polygon(100% 0%,
+            115% 0%,
+            130% 100%,
+            115% 100%);
+}
+
+/* P1 LTR */
+.arcade-bg[data-player="p1"] .arcade-bg__color--p1 {
+    clip-path: polygon(-15% 0%,
+            100% 0%,
+            115% 100%,
+            0% 100%);
+}
+
+/* P2 RTL */
+.arcade-bg[data-player="p2"] .arcade-bg__color--p2 {
+    clip-path: polygon(-15% 0%,
+            100% 0%,
+            115% 100%,
+            0% 100%);
+}
+
+@keyframes background-drift {
+    from {
+        transform: translate(-1%, 2%);
+    }
+    to {
+        transform: translate(2%, -1%);
+    }
+}

@@ -160,8 +160,9 @@ export function useGameState() {
   }
 
   function tossCoin() {
-    setCoinResult(Math.random() < 0.5 ? "heads" : "tails");
-    setPriority(Math.random() < 0.5 ? "p1" : "p2");
+    const result = Math.random() < 0.5 ? "heads" : "tails";
+    setCoinResult(result);
+    setPriority(result === "heads" ? "p1" : "p2");
   }
 
   function confirmPriorityAndBegin() {

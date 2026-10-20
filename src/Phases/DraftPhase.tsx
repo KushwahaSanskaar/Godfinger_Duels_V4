@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type { Agent, DraftQueueItem, GameEvent, PlayerId } from "../types";
 import { Card } from "../Components/Card";
-import { Pill } from "../Components/Pill";
 import { AgentPool } from "../Components/AgentPool";
 import { EventOverlay } from "../Components/EventOverlay";
+import { HeaderStatusPortal } from "../Components/HeaderStatusPortal";
 import { TIMER_CONFIG } from "../Data/timers";
 import { groupForSpecialty } from "../Data/modes";
 import type { ExtraBanTurn, PickRestriction } from "../Data/Events/draftEvents";
@@ -59,7 +59,8 @@ export function DraftPhase({
 }: DraftPhaseProps) {
   const [timeLeft, setTimeLeft] = useState(TIMER_CONFIG.draftSeconds);
   const inExtraBans = !!extraBans && extraBans.length > 0;
-  const isPickTurn = !activeEvent && !inExtraBans && draftItem?.type === "pick";
+  const pickPlayer = draftItem?.type === "pick" ? draftItem.player : undefined;
+  const isPickTurn = !activeEvent && !inExtraBans && !!pickPlayer;
 
   useEffect(() => {
     setTimeLeft(TIMER_CONFIG.draftSeconds);
@@ -76,35 +77,53 @@ export function DraftPhase({
     return () => clearTimeout(id);
   }, [timeLeft, isPickTurn, inExtraBans, onTimeout, onExtraBanTimeout]);
 
-  const currentRestriction = draftItem?.player ? pickRestriction[draftItem.player] : null;
   // "+" invitations let a banned agent of the right specialty be picked, so
   // suppress the ban-X overlay entirely for that one turn.
+  const currentRestriction = pickPlayer ? pickRestriction[pickPlayer] : null;
   const effectiveBanned = currentRestriction?.includeBanned ? [] : banned;
 
   return (
     <div className="space-y-4">
       {gatekeeperActive && (
-        <p className="text-[10px] font-pixel text-p2 tracking-widest text-center">
-          GATEKEEPER ACTIVE — no shared picks for the rest of this draft
-        </p>
+        <div className="w-full border-2 border-p2 bg-[#30151D] px-6 py-4 text-center">
+          <div className="flex items-center justify-center gap-3">
+            <span className="font-pixel text-xl text-p2">
+              ⚠
+            </span>
+
+            <span className="font-pixel text-lg text-white tracking-wider">
+              GATEKEEPER ACTIVE
+            </span>
+
+            <span className="font-pixel text-xl text-p2">
+              ⚠
+            </span>
+          </div>
+
+          <p className="mt-2 font-mono font-bold text-md text-[#FF9099]">
+            NO SHARED PICKS FOR THE REST OF THIS DRAFT
+          </p>
+        </div>
       )}
+
 
       {activeEvent ? (
         <EventOverlay event={activeEvent} onAcknowledge={onResolveEvent} />
       ) : inExtraBans && extraBans ? (
         <Card className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral-400">
-              Extra ban ({extraBans.length} remaining){" "}
-              {extraBans[0].enforceCategoryLock ? "— 1 per category, this wave only" : "— any Agent"}
-            </p>
-            <div className="flex items-center gap-3">
-              <Pill tone={extraBans[0].player}>{displayName(extraBans[0].player)}'s ban</Pill>
-              <span className={`font-pixel text-sm ${timeLeft <= 10 ? "text-p2" : "text-text-muted"}`}>
-                0:{timeLeft.toString().padStart(2, "0")}
+          <HeaderStatusPortal>
+            <div className="flex flex-col gap-1 text-white">
+              <span className="font-pixel text-[10px]">
+                EXTRA BAN ({extraBans.length} REMAINING) — ANY AGENT
+              </span>
+              <span className="font-semibold text-sm">
+                {displayName(extraBans[0].player)}'s ban
               </span>
             </div>
-          </div>
+            <span className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"}`}>
+              0:{timeLeft.toString().padStart(2, "0")}
+            </span>
+          </HeaderStatusPortal>
           <AgentPool
             agents={pool}
             banned={banned}
@@ -115,9 +134,7 @@ export function DraftPhase({
             }
             selection={(a) =>
               a.id === selectedAgent?.id
-                ? extraBans[0].player === "p2"
-                  ? "selected-p2"
-                  : "selected-p1"
+                ? extraBans[0].player === "p2" ? "selected-p2" : "selected-p1"
                 : "none"
             }
             onClick={onAgentSelect}
@@ -129,20 +146,24 @@ export function DraftPhase({
             confirmColor="#E63946"
           />
         </Card>
-      ) : draftItem && draftItem.type === "pick" && draftItem.player ? (
+      ) : pickPlayer ? (
         <Card className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral-400">On the clock:</p>
-            <div className="flex items-center gap-3">
-              <Pill tone={draftItem.player}>{displayName(draftItem.player)}</Pill>
-              <span className={`font-pixel text-sm ${timeLeft <= 10 ? "text-p2" : "text-text-muted"}`}>
-                0:{timeLeft.toString().padStart(2, "0")}
+          <HeaderStatusPortal>
+            <div className="flex flex-col gap-1 text-white">
+              <span className="font-pixel text-[10px]">
+                PICKING — {rosters[pickPlayer].length + 1}/{picksPerPlayer}
+              </span>
+              <span className="font-semibold text-sm">
+                {displayName(pickPlayer)}'s pick
               </span>
             </div>
-          </div>
+            <span className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"}`}>
+              0:{timeLeft.toString().padStart(2, "0")}
+            </span>
+          </HeaderStatusPortal>
           {currentRestriction && (
             <p className="text-xs font-sand text-p2">
-              {displayName(draftItem.player)} {restrictionLabel(currentRestriction)}
+              {displayName(pickPlayer)} {restrictionLabel(currentRestriction)}
             </p>
           )}
           <AgentPool
@@ -150,31 +171,26 @@ export function DraftPhase({
             banned={effectiveBanned}
             showBanOverlay={false}
             unavailable={(a) => {
-              const ownedByCurrentPlayer = (draftItem.player
-                ? rosters[draftItem.player as PlayerId]
-                : []
-              ).some((agent) => agent.id === a.id);
+              const ownedByCurrentPlayer = rosters[pickPlayer].some(
+                (agent) => agent.id === a.id
+              );
               const baseUnavailable = sharedPool
                 ? ownedByCurrentPlayer
                 : rosters.p1.some((agent) => agent.id === a.id) ||
-                  rosters.p2.some((agent) => agent.id === a.id);
+                rosters.p2.some((agent) => agent.id === a.id);
               if (baseUnavailable) return true;
               if (currentRestriction) {
                 if (currentRestriction.kind === "a-rank" && a.s_rank) return true;
                 if (
                   currentRestriction.kind === "specialty" &&
                   !currentRestriction.specialties?.includes(a.specialty)
-                ) {
-                  return true;
-                }
+                ) return true;
               }
               return false;
             }}
             selection={(a) => {
               if (a.id === selectedAgent?.id)
-                return draftItem.player === "p2"
-                  ? "selected-p2"
-                  : "selected-p1";
+                return pickPlayer === "p2" ? "selected-p2" : "selected-p1";
               const inP1 = rosters.p1.some((agent) => agent.id === a.id);
               const inP2 = rosters.p2.some((agent) => agent.id === a.id);
               if (inP1 && inP2) return "mirror";

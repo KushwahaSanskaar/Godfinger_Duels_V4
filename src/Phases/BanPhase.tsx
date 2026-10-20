@@ -1,9 +1,9 @@
 import type { Agent, ClassGroup, PlayerId } from "../types";
 import { Card } from "../Components/Card";
 import { AgentPool } from "../Components/AgentPool";
-import { Pill } from "../Components/Pill";
 import { useEffect, useState } from "react";
 import { TIMER_CONFIG } from "../Data/timers";
+import { HeaderStatusPortal } from "../Components/HeaderStatusPortal";
 
 interface BanPhaseProps {
   pool: Agent[];
@@ -48,17 +48,26 @@ export function BanPhase({
 
   return (
     <Card>
-      <div>
-        <p>
-          Ban {banIndex + 1} of {classGroups.length} — choose any group
-        </p>
-        <div className="flex items-center gap-3">
-          <Pill tone={banTurn ?? "neutral"}>{displayName(banTurn)}'s ban</Pill>
-          <span className={`font-pixel text-sm ${timeLeft <= 10 ? "text-p2" : "text-text-muted"}`}>
-            0:{timeLeft.toString().padStart(2, "0")}
+      <HeaderStatusPortal>
+        {/* Left information */}
+        <div className="flex flex-col gap-1 text-white">
+          <span className="font-pixel text-[10px]">
+            Ban {banIndex + 1} of {classGroups.length}
+          </span>
+
+          <span className="font-semibold text-sm">
+            {displayName(banTurn)}'s ban
           </span>
         </div>
-      </div>
+
+        {/* Right Information */}
+        <div
+          className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"
+            }`}
+        >
+          0:{timeLeft.toString().padStart(2, "0")}
+        </div>
+      </HeaderStatusPortal>
       <div>
         <AgentPool
           agents={pool}
@@ -72,6 +81,6 @@ export function BanPhase({
           confirmColor="#E63946"
         />
       </div>
-    </Card>
+    </Card >
   );
 }

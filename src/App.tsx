@@ -11,23 +11,33 @@ import "./App.css";
 import { PickList } from "./Components/PickList";
 import { useState } from "react";
 import type { Agent } from "./types";
+import { ArcadeBackground } from "./Components/ArcadeBackground";
 
 export default function App() {
   const game = useGameState(); // one call — everything comes back in `game`
   const [pendingDraftAgent, setPendingDraftAgent] = useState<Agent | null>(
     null,
   );
+  const activeBackgroundPlayer: "p1" | "p2" | null =
+  game.phase === "ban"
+    ? game.banTurn
+    : game.phase === "draft"
+    ? game.draftItem?.player ?? null
+    : null;
 
   return (
-    <div className="min-h-screen w-full bg-bg text-text-primary p-6">
+    <div className="relative isolate min-h-screen w-full text-text-primary p-6">
+      <ArcadeBackground activePlayer={activeBackgroundPlayer} />
       <header className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">
-          Host Console — Draft &amp; Duel
-        </h1>
       </header>
       <div className="w full mx-auto space-y-4">
         {(game.phase === "ban" || game.phase === "draft") && (
-          <PhaseHeader phase={game.phase} />
+          <PhaseHeader phase={game.phase}
+          eventActive={
+            game.phase === "draft" &&
+            game.activeEvent !== null
+          }
+          />
         )}
         {game.phase === "setup" && (
           <SetupScreen
@@ -158,6 +168,7 @@ export default function App() {
         {game.phase === "gameover" && (
           <GameOver
             winner={game.winner}
+            roundWins={game.roundWins}
             rosters={game.rosters}
             displayName={game.displayName}
             onReset={game.resetGame}
