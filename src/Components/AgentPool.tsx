@@ -88,7 +88,7 @@ export function AgentPool({
   const highlightedBanned = highlightedAgent ? banned.includes(highlightedAgent.id) : false;
   const highlightedLocked = highlightedAgent
     ? unavailableGroups.some(label => groups.find(g => g.label === label)?.agents.some(a => a.id === highlightedAgent.id)) ||
-      (!showBanOverlay && highlightedBanned) || !!unavailableFn?.(highlightedAgent)
+    (!showBanOverlay && highlightedBanned) || !!unavailableFn?.(highlightedAgent)
     : false;
   const highlightColor = highlightedSelection.endsWith("p1") || highlightedSelection === "p1"
     ? "#3A8EF6" : highlightedSelection.endsWith("p2") || highlightedSelection === "p2"
@@ -158,7 +158,6 @@ export function AgentPool({
         </div>
         <div className="shrink-0 border-l-2 border-[#463C59] pl-3 text-right">
           <div className="font-pixel text-[#E4D4FF]" style={{ fontSize: "clamp(11px,.85vw,23px)" }}>AGENT SELECT</div>
-          <div className="font-mono font-bold text-[#A79BBC]" style={{ fontSize: "clamp(10px,.7vw,19px)" }}>FIVE DIVISIONS</div>
         </div>
       </div>
 
@@ -179,9 +178,18 @@ export function AgentPool({
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   <span className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 font-pixel text-white leading-tight" style={{ fontSize: group.label.toLowerCase().includes("rupture") && group.label.toLowerCase().includes("armorer") ? "clamp(8px, .53vw, 16px)" : "clamp(11px, .85vw, 25px)" }}>
-                    {group.label.split("/").map((part, partIndex) => (
-                      <span key={partIndex} className="block whitespace-nowrap">{part.trim().toUpperCase()}</span>
-                    ))}
+                    {group.label.toLowerCase().includes("support") &&
+                      group.label.toLowerCase().includes("defense") ? (
+                      <span className="whitespace-nowrap">
+                        SUPPORT — DEFENSE
+                      </span>
+                    ) : (
+                      group.label.split("/").map((part, partIndex) => (
+                        <span key={partIndex} className="block whitespace-nowrap">
+                          {part.trim().toUpperCase()}
+                        </span>
+                      ))
+                    )}
                   </span>
                   {groupLocked && <span className="absolute right-1 top-1 font-mono text-[#FF9099]" style={{ fontSize: "clamp(8px,.48vw,13px)" }}>LOCK</span>}
                 </div>
