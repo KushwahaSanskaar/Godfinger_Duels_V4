@@ -1,10 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useId } from "react";
+import { DitherHeaderBackground } from "./DitherHeaderBackground";
 
 interface PhaseHeaderProps {
     phase: "ban" | "draft";
+    eventActive?: boolean;
 }
 
-export function PhaseHeader({ phase }: PhaseHeaderProps) {
+export function PhaseHeader({ phase, eventActive = false }: PhaseHeaderProps) {
     const isBan = phase === "ban";
     const [displayedPhase, setDisplayedPhase] = useState(phase);
 
@@ -19,43 +21,47 @@ export function PhaseHeader({ phase }: PhaseHeaderProps) {
         const swapText = setTimeout(() => setDisplayedPhase(phase), 200);
         const finish = setTimeout(() => el.classList.remove("glitch"), 400);
         return () => { clearTimeout(swapText); clearTimeout(finish); };
-    }, [phase]);
+    }, [phase, eventActive]);
 
     const isBanDisplay = displayedPhase === "ban";
+    const title = eventActive
+        ? "EVENT!"
+        : isBanDisplay
+            ? "BANNING"
+            : "PICKING";
 
     return (
-        <div className="relative w-full h-20 overflow-hidden flex items-center justify-center">
-            {/* Base layer — always p2 red */}
-            <div className="absolute inset-0 bg-p2" />
-            {/* Sliding layer — p1 blue, moves right to left */}
-            <div
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    bottom: 0,
-                    width: "100%",
-                    left: 0,
-                    backgroundColor: "#3A8EF6",
-                    clipPath: isBan
-                        ? "polygon(88% 0%, 100% 0%, 100% 100%, 90% 100%)"
-                        : "polygon(10% 0%, 100% 0%, 100% 100%, 12% 100%)",
-                    transition: "clip-path 100ms ease",
-                }}
-            />
-
+        <div className="draft-phase-header relative w-full overflow-hidden flex items-center justify-center">
+            <DitherHeaderBackground isBan={isBan} eventActive={eventActive} />
             {/* Text */}
             <span
                 ref={spanRef}
-                className={`relative z-10 text-white text-7xl tracking-widest font-pixel font-bold leading-none`}
+                className="
+                    relative z-10
+                    draft-phase-title tracking-widest
+                    font-pixel font-bold leading-none
+                    arcade-text-bounce
+                    text-white"
                 style={{
-                    transform: "translateY(-5px)",
-                    textShadow: isBanDisplay
-                        ? "0.3rem 0 0 #972934, 0 0.3rem 0 #972934, 0.3rem 0.3rem 0 #972934"
-                        : "0.3rem 0 0 #1748A1, 0 0.3rem 0 #1748A1, 0.3rem 0.3rem 0 #1748A1",
-                    WebkitTextStroke: isBanDisplay ? "2px #FF6C77" : "2px #77B2FF",
-                }}>
-                {isBanDisplay ? "BANNING" : "PICKING"}
+                    textShadow: eventActive
+                        ? "0.075em 0 0 #8A6800, 0 0.075em 0 #8A6800, 0.075em 0.075em 0 #8A6800"
+                        : isBanDisplay
+                            ? "0.075em 0 0 #972934, 0 0.075em 0 #972934, 0.075em 0.075em 0 #972934"
+                            : "0.075em 0 0 #1748A1, 0 0.075em 0 #1748A1, 0.075em 0.075em 0 #1748A1",
+
+                    WebkitTextStroke: eventActive
+                        ? "0.03125em #FFDA4D"
+                        : isBanDisplay
+                            ? "0.03125em #FF6C77"
+                            : "0.03125em #77B2FF",
+                }}
+            >
+                {title}
             </span>
+            <div
+                id="phase-header-status"
+                className="absolute inset-0 z-20 flex items-center justify-between px-6 pointer-events-none"
+            />
         </div>
     );
 }

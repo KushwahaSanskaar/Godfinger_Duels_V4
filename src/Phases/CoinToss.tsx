@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";  //All of this fucking sucks I'll re-write it I promise.
 import type { PlayerId } from "../types";
 
 interface CoinTossProps {
@@ -22,9 +22,9 @@ export function CoinToss({
     useEffect(() => {
         if (coinResult && !settled) {
             setFlipping(true);
-            const targetAngle = coinResult === "tails"
-                ? Math.ceil(angle / 360) * 360 + 2340 + 180     // lands on back face
-                : Math.ceil(angle / 360) * 360 + 2520;          // lands on front face
+            const targetAngle = Math.ceil(angle / 360) * 360
+                + 2520
+                + (coinResult === "tails" ? 180 : 0);
             setAngle(targetAngle);
             const timer = setTimeout(() => {
                 setFlipping(false);

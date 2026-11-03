@@ -9,25 +9,73 @@ import { GameOver } from "./Phases/GameOver";
 import { PhaseHeader } from "./Components/PhaseHeader";
 import "./App.css";
 import { PickList } from "./Components/PickList";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { PauseContext } from "./Hooks/PauseContext";
+import { HostControls } from "./Components/HostControls";
 import type { Agent } from "./types";
+import { ArcadeBackground } from "./Components/ArcadeBackground";
 
 export default function App() {
   const game = useGameState(); // one call — everything comes back in `game`
   const [pendingDraftAgent, setPendingDraftAgent] = useState<Agent | null>(
     null,
   );
+  // ----- host tempo controls -----
+  const contentRef = useRef<HTMLDivElement>(null);
+  // While paused nothing underneath can be clicked or typed into.
+  useEffect(() => {
+    contentRef.current?.toggleAttribute("inert", game.paused);
+  }, [game.paused, game.epoch]);
+  // A rewind remounts the screens; drop this component's tentative pick as well.
+  useEffect(() => {
+    setPendingDraftAgent(null);
+  }, [game.epoch]);
+  // Space = pause / play (not while typing, and not on a focused button).
+  const togglePauseRef = useRef(game.togglePause);
+  togglePauseRef.current = game.togglePause;
+  useEffect(() => {
+    if (game.phase === "setup") return;
+    function onKey(e: KeyboardEvent) {
+      if (e.code !== "Space" || e.repeat) return;
+      const t = e.target as HTMLElement | null;
+      if (t && /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(t.tagName)) return;
+      e.preventDefault();
+      togglePauseRef.current();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [game.phase]);
+
+  const activeBackgroundPlayer: "p1" | "p2" | null =
+  game.phase === "ban"
+    ? game.banTurn
+    : game.phase === "draft"
+    ? game.draftItem?.player ?? null
+    : null;
 
   return (
-    <div className="min-h-screen w-full bg-bg text-text-primary p-6">
+    <PauseContext.Provider value={game.paused}>
+    <div className="relative isolate min-h-screen w-full text-text-primary p-6">
+      <ArcadeBackground activePlayer={activeBackgroundPlayer} />
+      {game.phase !== "setup" && (
+        <HostControls
+          paused={game.paused}
+          canRewind={game.canRewind}
+          steps={game.historyCount}
+          onRewind={game.rewind}
+          onTogglePause={game.togglePause}
+        />
+      )}
       <header className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">
-          Host Console — Draft &amp; Duel
-        </h1>
       </header>
-      <div className="w full mx-auto space-y-4">
+      <div key={game.epoch} ref={contentRef} className="w full mx-auto space-y-4">
         {(game.phase === "ban" || game.phase === "draft") && (
-          <PhaseHeader phase={game.phase} />
+          <PhaseHeader phase={game.phase}
+          eventActive={
+            game.phase === "draft" &&
+            game.activeEvent !== null
+          }
+          />
         )}
         {game.phase === "setup" && (
           <SetupScreen
@@ -88,13 +136,20 @@ export default function App() {
                   activeEvent={game.activeEvent}
                   rosters={game.rosters}
                   picksPerPlayer={game.cfg.picksPerPlayer}
-                  sharedPool={game.cfg.sharedPool}
+                  sharedPool={game.effectiveSharedPool}
+                  pickRestriction={game.pickRestriction}
+                  extraBans={game.extraBans}
+                  waveLockedCategories={game.waveLockedCategories}
+                  gatekeeperActive={game.gatekeeperActive}
+                  turnKey={game.draftTurnKey}
                   displayName={game.displayName}
                   onDraft={(agent) => {
                     game.draftAgent(agent);
                   }}
                   onResolveEvent={game.resolveEvent}
                   onTimeout={game.autoResolveDraft}
+                  onResolveExtraBan={game.resolveExtraBan}
+                  onExtraBanTimeout={game.autoResolveExtraBan}
                   selectedAgent={pendingDraftAgent}
                   onAgentSelect={setPendingDraftAgent}
                 />
@@ -125,6 +180,30 @@ export default function App() {
             roundStage={game.roundStage}
             currentBoss={game.currentBoss}
             roundWins={game.roundWins}
+            overtimeStreak={game.overtimeStreak}
+            totalRounds={game.cfg.rounds}
+            effects={game.roundEffects}
+            affixOffer={game.affixOffer}
+            affixChoice={game.affixChoice}
+            affixPick={game.affixPick}
+            affixSelection={game.affixSelection}
+            necroStage={game.necroStage}
+            modifierRoll={game.modifierRoll}
+            onChooseAffix={game.chooseAffix}
+            onTogglePick={game.toggleAffixPick}
+            onConfirmAffix={game.confirmAffix}
+            onAcknowledgeModifier={game.acknowledgeModifier}
+            onAcknowledgeReveal={game.acknowledgeReveal}
+            squadPlan={game.squadPlan}
+            battleSquads={game.battleSquads}
+            morphChoices={game.morphChoices}
+            battleMorphs={game.battleMorphs}
+            morphOptionsFor={game.morphOptionsFor}
+            onChooseMorph={game.chooseMorph}
+            isControlEligible={game.isControlEligible}
+            onToggleControl={game.toggleControlPick}
+            onConfirmControl={game.confirmControl}
+            onControlTimeout={game.autoResolveControl}
             rosters={game.rosters}
             squads={game.squads}
             squadsConfirmed={game.squadsConfirmed}
@@ -152,12 +231,20 @@ export default function App() {
         {game.phase === "gameover" && (
           <GameOver
             winner={game.winner}
+            roundWins={game.roundWins}
             rosters={game.rosters}
             displayName={game.displayName}
             onReset={game.resetGame}
           />
         )}
       </div>
+      {game.paused && (
+        <div className="fixed inset-0 z-40 bg-black/60 flex flex-col items-center justify-center gap-3 pointer-events-none">
+          <span className="font-pixel text-4xl text-event">PAUSED</span>
+          <span className="font-pixel text-xs text-text-muted">PRESS PLAY OR SPACE TO RESUME</span>
+        </div>
+      )}
     </div>
+    </PauseContext.Provider>
   );
 }
