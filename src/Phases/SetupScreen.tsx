@@ -10,7 +10,10 @@ interface SetupScreenProps {
   onStart: () => void;
 }
 
-const MODE_DETAILS: Record<Mode, { title: string; tag: string; summary: string }> = {
+const MODE_DETAILS: Record<
+  Mode,
+  { title: string; tag: string; summary: string }
+> = {
   standard: {
     title: "CLASSIC DUEL",
     tag: "FULL MATCH",
@@ -31,21 +34,29 @@ export function SetupScreen({
   onStart,
 }: SetupScreenProps) {
   return (
-    <main style={{ "--setup-unit": "clamp(12px, min(0.833vw, 1.48dvh), 32px)" } as CSSProperties}
-      className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-[min(96%,calc(var(--setup-unit)*90))] flex-col justify-center gap-[calc(var(--setup-unit)*0.85)] py-[calc(var(--setup-unit)*0.75)]">
+    <main
+      style={
+        {
+          "--setup-unit": "clamp(12px, min(0.833vw, 1.48dvh), 32px)",
+        } as CSSProperties
+      }
+      className="mx-auto flex min-h-[calc(100dvh-3rem)] w-full max-w-[min(96%,calc(var(--setup-unit)*90))] flex-col justify-center gap-[calc(var(--setup-unit)*0.85)] py-[calc(var(--setup-unit)*0.75)]"
+    >
       {/* Main title */}
       <div className="border-b-4 border-[#7B5EA7] bg-[#141420] px-[calc(var(--setup-unit)*1.5)] py-[calc(var(--setup-unit)*1)] text-center">
         <h1
           className="font-pixel text-[calc(var(--setup-unit)*3.2)] font-bold leading-[1.15] tracking-wide text-white"
           style={{
-            textShadow: "0.07em 0 0 #1748A1, 0 0.07em 0 #1748A1, 0.07em 0.07em 0 #1748A1",
+            textShadow:
+              "0.07em 0 0 #1748A1, 0 0.07em 0 #1748A1, 0.07em 0.07em 0 #1748A1",
             WebkitTextStroke: "0.02em #77B2FF",
           }}
         >
           <span>GODFINGER </span>
           <span
             style={{
-              textShadow: "0.07em 0 0 #9B7615, 0 0.07em 0 #9B7615, 0.07em 0.07em 0 #9B7615",
+              textShadow:
+                "0.07em 0 0 #9B7615, 0 0.07em 0 #9B7615, 0.07em 0.07em 0 #9B7615",
               WebkitTextStroke: "0.02em #FFDA4D",
             }}
           >
@@ -58,12 +69,20 @@ export function SetupScreen({
       </div>
 
       {/* Mode selection */}
-      <section aria-labelledby="setup-mode-heading" className="bg-[#141420] p-[calc(var(--setup-unit)*1)]">
+      <section
+        aria-labelledby="setup-mode-heading"
+        className="bg-[#141420] p-[calc(var(--setup-unit)*1)]"
+      >
         <div className="mb-[calc(var(--setup-unit)*0.75)] flex flex-wrap items-center justify-between gap-[calc(var(--setup-unit)*0.5)]">
-          <h2 id="setup-mode-heading" className="font-pixel text-[calc(var(--setup-unit)*1.3)] text-white">
+          <h2
+            id="setup-mode-heading"
+            className="font-pixel text-[calc(var(--setup-unit)*1.3)] text-white"
+          >
             01 <span className="text-[#BDA4E8]">/</span> SELECT MODE
           </h2>
-          <span className="font-mono text-[calc(var(--setup-unit)*0.85)] text-[#AFA7C4]">CHOOSE YOUR RULESET</span>
+          <span className="font-mono text-[calc(var(--setup-unit)*0.85)] text-[#AFA7C4]">
+            CHOOSE YOUR RULESET
+          </span>
         </div>
         <div className="grid grid-cols-1 gap-[calc(var(--setup-unit)*0.75)] md:grid-cols-2">
           {(Object.keys(MODES) as Mode[]).map((key) => {
@@ -76,16 +95,21 @@ export function SetupScreen({
                 type="button"
                 aria-pressed={selected}
                 onClick={() => onModeChange(key)}
-                className={`group relative flex min-w-0 flex-col gap-[calc(var(--setup-unit)*0.6)] border-[max(2px,calc(var(--setup-unit)*0.19))] p-[calc(var(--setup-unit)*1.2)] text-left transition-colors duration-150 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#F5C518] ${selected
+                className={`group relative flex min-w-0 flex-col gap-[calc(var(--setup-unit)*0.6)] border-[max(2px,calc(var(--setup-unit)*0.19))] p-[calc(var(--setup-unit)*1.2)] text-left transition-colors duration-150 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#F5C518] ${
+                  selected
                     ? "border-[#F5C518] bg-[#302817]"
                     : "border-[#464052] bg-[#20202E] hover:border-[#A58BC7] hover:bg-[#292535]"
-                  }`}
+                }`}
               >
                 <div className="flex w-full items-center justify-between gap-[calc(var(--setup-unit)*0.5)]">
-                  <span className={`font-pixel text-[calc(var(--setup-unit)*0.78)] ${selected ? "text-[#F5C518]" : "text-[#B5A9C8]"}`}>
+                  <span
+                    className={`font-pixel text-[calc(var(--setup-unit)*0.78)] ${selected ? "text-[#F5C518]" : "text-[#B5A9C8]"}`}
+                  >
                     {details.tag}
                   </span>
-                  <span className={`font-pixel text-[calc(var(--setup-unit)*0.78)] ${selected ? "text-[#F5C518]" : "text-[#817A90]"}`}>
+                  <span
+                    className={`font-pixel text-[calc(var(--setup-unit)*0.78)] ${selected ? "text-[#F5C518]" : "text-[#817A90]"}`}
+                  >
                     {selected ? "[ SELECTED ]" : "[ SELECT ]"}
                   </span>
                 </div>
@@ -93,10 +117,14 @@ export function SetupScreen({
                   {details.title}
                 </strong>
                 <div className="flex flex-wrap gap-[calc(var(--setup-unit)*0.5)] font-mono text-[calc(var(--setup-unit)*0.9)] font-bold">
-                  <span className={`px-[calc(var(--setup-unit)*0.75)] py-[calc(var(--setup-unit)*0.25)] ${selected ? "bg-[#7A611C] text-white" : "bg-[#353044] text-[#DDD5E9]"}`}>
+                  <span
+                    className={`px-[calc(var(--setup-unit)*0.75)] py-[calc(var(--setup-unit)*0.25)] ${selected ? "bg-[#7A611C] text-white" : "bg-[#353044] text-[#DDD5E9]"}`}
+                  >
                     {config.picksPerPlayer} AGENTS / PLAYER
                   </span>
-                  <span className={`px-[calc(var(--setup-unit)*0.75)] py-[calc(var(--setup-unit)*0.25)] ${selected ? "bg-[#7A611C] text-white" : "bg-[#353044] text-[#DDD5E9]"}`}>
+                  <span
+                    className={`px-[calc(var(--setup-unit)*0.75)] py-[calc(var(--setup-unit)*0.25)] ${selected ? "bg-[#7A611C] text-white" : "bg-[#353044] text-[#DDD5E9]"}`}
+                  >
                     {config.sharedPool ? "MIRROR PICKS" : "EXCLUSIVE PICKS"}
                   </span>
                 </div>
@@ -110,14 +138,26 @@ export function SetupScreen({
       </section>
 
       {/* Player matchup */}
-      <section aria-labelledby="setup-players-heading" className="bg-[#141420] p-[calc(var(--setup-unit)*1)]">
-        <h2 id="setup-players-heading" className="mb-[calc(var(--setup-unit)*0.75)] font-pixel text-[calc(var(--setup-unit)*1.3)] text-white">
+      <section
+        aria-labelledby="setup-players-heading"
+        className="bg-[#141420] p-[calc(var(--setup-unit)*1)]"
+      >
+        <h2
+          id="setup-players-heading"
+          className="mb-[calc(var(--setup-unit)*0.75)] font-pixel text-[calc(var(--setup-unit)*1.3)] text-white"
+        >
           02 <span className="text-[#BDA4E8]">/</span> THE CHALLENGERS
         </h2>
         <div className="grid grid-cols-1 items-stretch gap-[calc(var(--setup-unit)*0.85)] md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
           {(["p1", "p2"] as PlayerId[]).map((player, index) => (
-            <div key={player} className={`flex min-w-0 flex-col gap-[calc(var(--setup-unit)*0.5)] border-t-[max(4px,calc(var(--setup-unit)*0.3))] p-[calc(var(--setup-unit)*1)] ${player === "p1" ? "border-[#3A8EF6] bg-[#17253B]" : "border-[#E63946] bg-[#382024]"} ${index === 1 ? "md:col-start-3 md:row-start-1" : "md:col-start-1 md:row-start-1"}`}>
-              <label htmlFor={`setup-name-${player}`} className={`font-pixel text-[calc(var(--setup-unit)*1.1)] ${player === "p1" ? "text-[#77B2FF]" : "text-[#FF8690]"}`}>
+            <div
+              key={player}
+              className={`flex min-w-0 flex-col gap-[calc(var(--setup-unit)*0.5)] border-t-[max(4px,calc(var(--setup-unit)*0.3))] p-[calc(var(--setup-unit)*1)] ${player === "p1" ? "border-[#3A8EF6] bg-[#17253B]" : "border-[#E63946] bg-[#382024]"} ${index === 1 ? "md:col-start-3 md:row-start-1" : "md:col-start-1 md:row-start-1"}`}
+            >
+              <label
+                htmlFor={`setup-name-${player}`}
+                className={`font-pixel text-[calc(var(--setup-unit)*1.1)] ${player === "p1" ? "text-[#77B2FF]" : "text-[#FF8690]"}`}
+              >
                 {player === "p1" ? "PLAYER 01" : "PLAYER 02"}
               </label>
               <input

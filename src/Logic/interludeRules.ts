@@ -2,8 +2,15 @@
 
 import type { Agent, PlayerId } from "../types";
 import { AFFIXES, type AffixDef } from "../Data/Events/affixes";
-import { UNIVERSAL_MODIFIERS, type ModifierDef } from "../Data/Events/universalModifiers";
-import { SOUL_STONE_AGENT, SOUL_STONE_PLUS_AGENT, isSoulStone } from "../Data/morphItems";
+import {
+  UNIVERSAL_MODIFIERS,
+  type ModifierDef,
+} from "../Data/Events/universalModifiers";
+import {
+  SOUL_STONE_AGENT,
+  SOUL_STONE_PLUS_AGENT,
+  isSoulStone,
+} from "../Data/morphItems";
 
 export const SOUL_ID = SOUL_STONE_AGENT.id;
 export const SOUL_PLUS_ID = SOUL_STONE_PLUS_AGENT.id;
@@ -35,31 +42,45 @@ function uniqueById(list: Agent[]): Agent[] {
 // Eliminated agents `p` could take back: never a Soul Stone, never one they own.
 export function ownRevivable(ctx: InterludeContext, p: PlayerId): Agent[] {
   const owned = new Set(ctx.rosters[p].map((a) => a.id));
-  return uniqueById(ctx.eliminatedPool[p]).filter((a) => !isSoulStone(a.id) && !owned.has(a.id));
+  return uniqueById(ctx.eliminatedPool[p]).filter(
+    (a) => !isSoulStone(a.id) && !owned.has(a.id),
+  );
 }
 
 // Necromancy: EVERYONE's eliminated agents.
 export function anyRevivable(ctx: InterludeContext, p: PlayerId): Agent[] {
   const owned = new Set(ctx.rosters[p].map((a) => a.id));
-  return uniqueById([...ctx.eliminatedPool.p1, ...ctx.eliminatedPool.p2]).filter(
-    (a) => !isSoulStone(a.id) && !owned.has(a.id),
-  );
+  return uniqueById([
+    ...ctx.eliminatedPool.p1,
+    ...ctx.eliminatedPool.p2,
+  ]).filter((a) => !isSoulStone(a.id) && !owned.has(a.id));
 }
 
 // Agents from the round that just ended that are still on `p`'s roster.
-export function lastSquadSurvivors(ctx: InterludeContext, p: PlayerId): string[] {
-  return ctx.lastSquads[p].filter((id) => ctx.rosters[p].some((a) => a.id === id));
+export function lastSquadSurvivors(
+  ctx: InterludeContext,
+  p: PlayerId,
+): string[] {
+  return ctx.lastSquads[p].filter((id) =>
+    ctx.rosters[p].some((a) => a.id === id),
+  );
 }
 
 // Last round's survivors who could still sign an Overtime Contract.
-export function contractCandidates(ctx: InterludeContext, p: PlayerId): string[] {
+export function contractCandidates(
+  ctx: InterludeContext,
+  p: PlayerId,
+): string[] {
   const already = ctx.immune?.[p] ?? [];
   return lastSquadSurvivors(ctx, p).filter((id) => !already.includes(id));
 }
 
 // Kamikaze only bites a player who WON the last battle, has 2+ survivors from
 // that squad, and can afford to lose 2. Otherwise it is wasted ("no effect").
-export function kamikazeApplies(ctx: InterludeContext, target: PlayerId): boolean {
+export function kamikazeApplies(
+  ctx: InterludeContext,
+  target: PlayerId,
+): boolean {
   return (
     ctx.lastWinner === target &&
     lastSquadSurvivors(ctx, target).length >= 2 &&
@@ -68,7 +89,11 @@ export function kamikazeApplies(ctx: InterludeContext, target: PlayerId): boolea
 }
 
 // Can this POSITIVE affix do anything for `chooser`?
-export function positiveAvailable(def: AffixDef, ctx: InterludeContext, chooser: PlayerId): boolean {
+export function positiveAvailable(
+  def: AffixDef,
+  ctx: InterludeContext,
+  chooser: PlayerId,
+): boolean {
   switch (def.id) {
     case "overtime-contract":
       return contractCandidates(ctx, chooser).length >= 1;
@@ -104,7 +129,10 @@ export function rollAffixOffer(
 ): AffixOffer | null {
   const chooser = otherPlayer(leader);
   const positives = AFFIXES.filter(
-    (a) => a.ready && a.polarity === "positive" && positiveAvailable(a, ctx, chooser),
+    (a) =>
+      a.ready &&
+      a.polarity === "positive" &&
+      positiveAvailable(a, ctx, chooser),
   );
   // Negatives are always rolled: if one can't bite (e.g. Kamikaze), it is the
   // losing player's choice whether to give it or waste it.
@@ -117,8 +145,13 @@ export function rollAffixOffer(
   return { positive, negative, leader, chooser };
 }
 
-export function rollModifier(rng: () => number = Math.random): ModifierDef | null {
-  return pickOne(UNIVERSAL_MODIFIERS.filter((m) => m.ready), rng);
+export function rollModifier(
+  rng: () => number = Math.random,
+): ModifierDef | null {
+  return pickOne(
+    UNIVERSAL_MODIFIERS.filter((m) => m.ready),
+    rng,
+  );
 }
 
 // ---------- Preset Teams ----------
@@ -149,21 +182,44 @@ function sample<T>(list: T[], n: number, rng: () => number): T[] {
 // Hugo + 2 Stun.
 export const HUGO_ID = "hugo";
 
-export function rollPresetTeam(agents: Agent[], rng: () => number = Math.random): string[] {
+export function rollPresetTeam(
+  agents: Agent[],
+  rng: () => number = Math.random,
+): string[] {
   const usable = agents.filter((a) => !isSoulStone(a.id));
   const [core, stun, sup] = SHAPES[Math.floor(rng() * SHAPES.length)];
   const team = [
-    ...sample(usable.filter((a) => CORE.includes(a.specialty)), core, rng),
-    ...sample(usable.filter((a) => STUN.includes(a.specialty)), stun, rng),
-    ...sample(usable.filter((a) => SUPPORT.includes(a.specialty)), sup, rng),
+    ...sample(
+      usable.filter((a) => CORE.includes(a.specialty)),
+      core,
+      rng,
+    ),
+    ...sample(
+      usable.filter((a) => STUN.includes(a.specialty)),
+      stun,
+      rng,
+    ),
+    ...sample(
+      usable.filter((a) => SUPPORT.includes(a.specialty)),
+      sup,
+      rng,
+    ),
   ];
   const hugo = team.find((a) => a.id === HUGO_ID);
   if (hugo) {
     const stunners = rng() < 0.5 ? 1 : 2;
     return [
       hugo,
-      ...sample(usable.filter((a) => STUN.includes(a.specialty)), stunners, rng),
-      ...sample(usable.filter((a) => SUPPORT.includes(a.specialty)), 2 - stunners, rng),
+      ...sample(
+        usable.filter((a) => STUN.includes(a.specialty)),
+        stunners,
+        rng,
+      ),
+      ...sample(
+        usable.filter((a) => SUPPORT.includes(a.specialty)),
+        2 - stunners,
+        rng,
+      ),
     ].map((a) => a.id);
   }
   return team.map((a) => a.id);

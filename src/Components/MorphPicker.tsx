@@ -27,7 +27,9 @@ export function MorphPicker({
   onPick,
   onClose,
 }: MorphPickerProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(currentId ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    currentId ?? null,
+  );
   const isP1 = player === "p1";
   const accent = isP1 ? "text-p1" : "text-p2";
   const border = isP1 ? "border-p1" : "border-p2";
@@ -87,7 +89,13 @@ export function MorphPicker({
                     <AgentCard
                       agent={agent}
                       size={96}
-                      selection={selectedId === agent.id ? (isP1 ? "selected-p1" : "selected-p2") : "none"}
+                      selection={
+                        selectedId === agent.id
+                          ? isP1
+                            ? "selected-p1"
+                            : "selected-p2"
+                          : "none"
+                      }
                       onClick={() => setSelectedId(agent.id)}
                     />
                     {banned.includes(agent.id) && (
@@ -101,7 +109,9 @@ export function MorphPicker({
             </div>
           ))}
           {groups.length === 0 && (
-            <div className="font-pixel text-sm text-text-muted">NO AGENTS AVAILABLE</div>
+            <div className="font-pixel text-sm text-text-muted">
+              NO AGENTS AVAILABLE
+            </div>
           )}
         </div>
 
@@ -113,7 +123,9 @@ export function MorphPicker({
               selected ? "hover:opacity-80" : "cursor-not-allowed opacity-20"
             }`}
           >
-            {selected ? `BECOME ${selected.name.toUpperCase()}` : "SELECT AN AGENT"}
+            {selected
+              ? `BECOME ${selected.name.toUpperCase()}`
+              : "SELECT AN AGENT"}
           </button>
         </div>
       </div>

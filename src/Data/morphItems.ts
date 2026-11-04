@@ -35,15 +35,28 @@ function wildcard(id: string, name: string, tag: string): Agent {
   };
 }
 
-export const SOUL_STONE_AGENT: Agent = wildcard("soul-stone", "Soul Stone", "SOUL");
-export const SOUL_STONE_PLUS_AGENT: Agent = wildcard("soul-stone-plus", "Soul Stone+", "SOUL+");
+export const SOUL_STONE_AGENT: Agent = wildcard(
+  "soul-stone",
+  "Soul Stone",
+  "SOUL",
+);
+export const SOUL_STONE_PLUS_AGENT: Agent = wildcard(
+  "soul-stone-plus",
+  "Soul Stone+",
+  "SOUL+",
+);
 
 // The five invitation classes. Support also covers Defense, like everywhere else.
 const INVITATION_CLASSES = [
   { key: "attack", label: "Attack", tag: "ATK", specialties: ["Attack"] },
   { key: "anomaly", label: "Anomaly", tag: "ANO", specialties: ["Anomaly"] },
   { key: "rupture", label: "Rupture", tag: "RUP", specialties: ["Rupture"] },
-  { key: "support", label: "Support", tag: "SUP", specialties: ["Support", "Defense"] },
+  {
+    key: "support",
+    label: "Support",
+    tag: "SUP",
+    specialties: ["Support", "Defense"],
+  },
   { key: "stun", label: "Stun", tag: "STN", specialties: ["Stun"] },
 ];
 
@@ -71,14 +84,22 @@ add({
 });
 INVITATION_CLASSES.forEach((c) => {
   add({
-    agent: wildcard(`${c.key}-invitation`, `${c.label} Invitation`, `${c.tag} INV`),
+    agent: wildcard(
+      `${c.key}-invitation`,
+      `${c.label} Invitation`,
+      `${c.tag} INV`,
+    ),
     specialties: c.specialties,
     plus: false,
     soulStone: false,
     note: `Choose any unbanned ${c.label} Agent that is not already on your roster.`,
   });
   add({
-    agent: wildcard(`${c.key}-invitation-plus`, `${c.label} Invitation+`, `${c.tag} INV+`),
+    agent: wildcard(
+      `${c.key}-invitation-plus`,
+      `${c.label} Invitation+`,
+      `${c.tag} INV+`,
+    ),
     specialties: c.specialties,
     plus: true,
     soulStone: false,
@@ -87,7 +108,8 @@ INVITATION_CLASSES.forEach((c) => {
 });
 
 export const isMorphItem = (id: string): boolean => MORPH_IDS.has(id);
-export const isSoulStone = (id: string): boolean => MORPH_ITEMS[id]?.soulStone === true;
+export const isSoulStone = (id: string): boolean =>
+  MORPH_ITEMS[id]?.soulStone === true;
 
 export interface MorphOptionsContext {
   pool: Agent[]; // every real agent
@@ -99,14 +121,22 @@ export interface MorphOptionsContext {
 // The agents `item` may turn into right now. If the strict rule leaves nothing (every
 // matching agent is banned or owned), it relaxes step by step instead of leaving
 // the player stuck with an item they can't use.
-export function morphOptions(item: MorphItem, ctx: MorphOptionsContext): Agent[] {
+export function morphOptions(
+  item: MorphItem,
+  ctx: MorphOptionsContext,
+): Agent[] {
   const matching = ctx.pool.filter(
     (a) => !item.specialties || item.specialties.includes(a.specialty),
   );
   const unbanned = matching.filter((a) => !ctx.banned.includes(a.id));
   const steps: Agent[][] = item.plus
     ? [matching, ctx.pool]
-    : [unbanned.filter((a) => !ctx.ownedIds.includes(a.id)), unbanned, matching, ctx.pool];
+    : [
+        unbanned.filter((a) => !ctx.ownedIds.includes(a.id)),
+        unbanned,
+        matching,
+        ctx.pool,
+      ];
   for (const step of steps) {
     const free = step.filter((a) => !ctx.takenIds.includes(a.id));
     if (free.length > 0) return free;

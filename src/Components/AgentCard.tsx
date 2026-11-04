@@ -1,151 +1,185 @@
 import { Agent } from "../types";
 
 interface AgentCardProps {
-    agent: Agent;
-    banned?: boolean;
-    unavailable?: boolean;
-    cooldown?: number; // rounds remaining on cooldown; >0 shows yellow border + hourglass badge instead of grey
-    selection?: "none" | "p1" | "p2" | "mirror" | "selected-p1" | "selected-p2";
-    onClick?: () => void;
-    onConfirm?: () => void;
-    confirmLabel?: string;
-    confirmColor?: string;
-    size?: number;
+  agent: Agent;
+  banned?: boolean;
+  unavailable?: boolean;
+  cooldown?: number; // rounds remaining on cooldown; >0 shows yellow border + hourglass badge instead of grey
+  selection?: "none" | "p1" | "p2" | "mirror" | "selected-p1" | "selected-p2";
+  onClick?: () => void;
+  onConfirm?: () => void;
+  confirmLabel?: string;
+  confirmColor?: string;
+  size?: number;
 }
 
 export function AgentCard({
-    agent,
-    banned = false,
-    unavailable = false,
-    cooldown = 0,
-    selection = "none",
-    onClick,
-    onConfirm,
-    confirmLabel,
-    confirmColor,
-    size = 64,
+  agent,
+  banned = false,
+  unavailable = false,
+  cooldown = 0,
+  selection = "none",
+  onClick,
+  onConfirm,
+  confirmLabel,
+  confirmColor,
+  size = 64,
 }: AgentCardProps) {
+  const imagePath = `/agents/${agent.art ?? agent.id}.webp`;
+  const scale = Math.max(1, size / 112);
+  const borderWidth = size >= 180 ? Math.min(9, Math.round(size / 28)) : 4;
 
+  // "unavailable" still governs whether the card is clickable — cooldown
+  // just changes how that state is DRAWN, so a cooldown agent doesn't
+  // read as "eliminated" the way a plain greyed-out card does.
+  const onCooldown = cooldown > 0;
+  const interactionDisabled = banned || unavailable;
+  const showGreyVisual = interactionDisabled && !onCooldown;
 
-    const imagePath = `/agents/${agent.art ?? agent.id}.webp`;
-    const scale = Math.max(1, size / 112);
-    const borderWidth = size >= 180 ? Math.min(9, Math.round(size / 28)) : 4;
+  let borderClass = "border border-banned";
+  let borderStyle: React.CSSProperties = {};
 
-    // "unavailable" still governs whether the card is clickable — cooldown
-    // just changes how that state is DRAWN, so a cooldown agent doesn't
-    // read as "eliminated" the way a plain greyed-out card does.
-    const onCooldown = cooldown > 0;
-    const interactionDisabled = banned || unavailable;
-    const showGreyVisual = interactionDisabled && !onCooldown;
+  if (onCooldown) {
+    borderClass = "border-4 border-yellow-400";
+  } else {
+    switch (banned ? "none" : selection) {
+      case "p1":
+        borderClass = "border-4 border-p1";
+        break;
 
-    let borderClass = "border border-banned";
-    let borderStyle: React.CSSProperties = {};
+      case "p2":
+        borderClass = "border-4 border-p2";
+        break;
 
-    if (onCooldown) {
-        borderClass = "border-4 border-yellow-400";
-    } else {
-        switch (banned ? "none" : selection) {
-            case "p1":
-                borderClass = "border-4 border-p1";
-                break;
+      case "mirror":
+        borderStyle = {
+          borderTop: "4px solid #3A8EF6",
+          borderLeft: "4px solid #3A8EF6",
+          borderBottom: "4px solid #E63946",
+          borderRight: "4px solid #E63946",
+        };
+        break;
 
-            case "p2":
-                borderClass = "border-4 border-p2";
-                break;
+      case "selected-p1":
+        borderClass = "border-4 border-p1-alt2";
+        break;
 
-            case "mirror":
-                borderStyle = {
-                    borderTop: "4px solid #3A8EF6",
-                    borderLeft: "4px solid #3A8EF6",
-                    borderBottom: "4px solid #E63946",
-                    borderRight: "4px solid #E63946",
-                };
-                break;
-
-            case "selected-p1":
-                borderClass = "border-4 border-p1-alt2";
-                break;
-
-            case "selected-p2":
-                borderClass = "border-4 border-p2-alt2";
-                break;;
-        }
+      case "selected-p2":
+        borderClass = "border-4 border-p2-alt2";
+        break;
     }
+  }
 
-    return (
-        <div
-            onClick={!interactionDisabled ? onClick : undefined}
-            style={{ ...borderStyle, width: size, height: size, ...(borderClass.includes("border-4") ? { borderWidth } : {}) }}
-            className={`
+  return (
+    <div
+      onClick={!interactionDisabled ? onClick : undefined}
+      style={{
+        ...borderStyle,
+        width: size,
+        height: size,
+        ...(borderClass.includes("border-4") ? { borderWidth } : {}),
+      }}
+      className={`
                 relative overflow-hidden flex-shrink-0
                 ${borderClass}
                 ${interactionDisabled ? "cursor-not-allowed" : "cursor-pointer"}
                 `}
-        >
-            {/* Agent Images */}
-            <div className="relative w-full h-full bg-unavailable">
-                <img
-                    src={imagePath}
-                    alt={agent.name}
-                    className={`
+    >
+      {/* Agent Images */}
+      <div className="relative w-full h-full bg-unavailable">
+        <img
+          src={imagePath}
+          alt={agent.name}
+          className={`
                                 w-full h-full object-cover object-top hover:scale-105
                                 ${showGreyVisual ? "grayscale brightness-[0.55]" : ""}
                                 transition-all duration-150
                             `}
-                />
-            </div>
+        />
+      </div>
 
-            {/* Cooldown badge */}
-            {onCooldown && (
-                <div
-                    className="absolute top-0 right-0 z-20 flex items-center gap-0.5 bg-yellow-400 justify-center text-black font-bold leading-none"
-                    style={{ fontSize: Math.round(10 * scale), minHeight: Math.round(20 * scale), minWidth: Math.round(20 * scale), paddingInline: Math.round(4 * scale), gap: Math.round(2 * scale) }}
-                    title={`On cooldown for ${cooldown} more round${cooldown > 1 ? "s" : ""}`}
-                >
-                    <span>⏳</span>
-                    <span>{cooldown}</span>
-                </div>
-            )}
-
-            {/* Morph-item label (Soul Stone, Invitations) */}
-            {agent.tag && (
-                <div
-                    className="absolute bottom-0 left-0 z-10 bg-event text-[#141420] font-pixel font-bold leading-none"
-                    style={{ fontSize: Math.max(7, Math.round(9 * scale)), padding: `${Math.round(2 * scale)}px ${Math.round(4 * scale)}px` }}
-                >
-                    {agent.tag}
-                </div>
-            )}
-
-            {/* Confirm Overlay */}
-            {onConfirm && confirmLabel && (
-                <div
-                    className="absolute left-0 right-0 top-1/3 h-1/3 z-10 flex items-center justify-center py-1 cursor-pointer"
-                    style={{ backgroundColor: confirmColor }}
-                    onClick={(e) => { e.stopPropagation(); onConfirm(); }}
-                >
-                    <span className="text-white font-pixel font-bold"
-                        style={{
-                            fontSize: `clamp(7px, ${size * 0.19}px, 58px)`,
-                            transform: `translateY(-${Math.max(2, Math.round(size / 56))}px)`,
-                            textShadow: confirmColor === "#3A8EF6"
-                                ? "0.2rem 0 0 #1748A1, 0 0.2rem 0 #1748A1, 0.2rem 0.2rem 0 #1748A1"
-                                : "0.2rem 0 0 #972934, 0 0.2rem 0 #972934, 0.2rem 0.2rem 0 #972934",
-                            WebkitTextStroke: confirmColor === "#3A8EF6" ? `${Math.max(1, Math.round(size / 112))}px #77B2FF` : `${Math.max(1, Math.round(size / 112))}px #FF6C77`
-                        }}>{confirmLabel}</span>
-                </div>
-            )}
-
-            {/* Ban X Overlay */}
-            {banned && (
-                <svg
-                    viewBox="0 0 100 100"
-                    className="absolute inset-0 w-full h-full"
-                >
-                    <line x1="0" y1="0" x2="100" y2="100" stroke="#802027" strokeWidth="15" />
-                    <line x1="100" y1="0" x2="0" y2="100" stroke="#802027" strokeWidth="15" />
-                </svg>
-            )}
+      {/* Cooldown badge */}
+      {onCooldown && (
+        <div
+          className="absolute top-0 right-0 z-20 flex items-center gap-0.5 bg-yellow-400 justify-center text-black font-bold leading-none"
+          style={{
+            fontSize: Math.round(10 * scale),
+            minHeight: Math.round(20 * scale),
+            minWidth: Math.round(20 * scale),
+            paddingInline: Math.round(4 * scale),
+            gap: Math.round(2 * scale),
+          }}
+          title={`On cooldown for ${cooldown} more round${cooldown > 1 ? "s" : ""}`}
+        >
+          <span>⏳</span>
+          <span>{cooldown}</span>
         </div>
-    )
-}
+      )}
+
+      {/* Morph-item label (Soul Stone, Invitations) */}
+      {agent.tag && (
+        <div
+          className="absolute bottom-0 left-0 z-10 bg-event text-[#141420] font-pixel font-bold leading-none"
+          style={{
+            fontSize: Math.max(7, Math.round(9 * scale)),
+            padding: `${Math.round(2 * scale)}px ${Math.round(4 * scale)}px`,
+          }}
+        >
+          {agent.tag}
+        </div>
+      )}
+
+      {/* Confirm Overlay */}
+      {onConfirm && confirmLabel && (
+        <div
+          className="absolute left-0 right-0 top-1/3 h-1/3 z-10 flex items-center justify-center py-1 cursor-pointer"
+          style={{ backgroundColor: confirmColor }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onConfirm();
+          }}
+        >
+          <span
+            className="text-white font-pixel font-bold"
+            style={{
+              fontSize: `clamp(7px, ${size * 0.19}px, 58px)`,
+              transform: `translateY(-${Math.max(2, Math.round(size / 56))}px)`,
+              textShadow:
+                confirmColor === "#3A8EF6"
+                  ? "0.2rem 0 0 #1748A1, 0 0.2rem 0 #1748A1, 0.2rem 0.2rem 0 #1748A1"
+                  : "0.2rem 0 0 #972934, 0 0.2rem 0 #972934, 0.2rem 0.2rem 0 #972934",
+              WebkitTextStroke:
+                confirmColor === "#3A8EF6"
+                  ? `${Math.max(1, Math.round(size / 112))}px #77B2FF`
+                  : `${Math.max(1, Math.round(size / 112))}px #FF6C77`,
+            }}
+          >
+            {confirmLabel}
+          </span>
+        </div>
+      )}
+
+      {/* Ban X Overlay */}
+      {banned && (
+        <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
+          <line
+            x1="0"
+            y1="0"
+            x2="100"
+            y2="100"
+            stroke="#802027"
+            strokeWidth="15"
+          />
+          <line
+            x1="100"
+            y1="0"
+            x2="0"
+            y2="100"
+            stroke="#802027"
+            strokeWidth="15"
+          />
+        </svg>
+      )}
+    </div>
+  );
+}

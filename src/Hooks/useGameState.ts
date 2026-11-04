@@ -126,7 +126,9 @@ export function useGameState() {
     entries: { value: unknown; set: (v: unknown) => void }[];
   }>({ i: 0, entries: [] });
   trackerRef.current.i = 0;
-  function useTracked<T>(init: T | (() => T)): [T, (v: T | ((prev: T) => T)) => void] {
+  function useTracked<T>(
+    init: T | (() => T),
+  ): [T, (v: T | ((prev: T) => T)) => void] {
     const [value, set] = useState<T>(init);
     trackerRef.current.entries[trackerRef.current.i++] = {
       value,
@@ -134,7 +136,6 @@ export function useGameState() {
     };
     return [value, set];
   }
-
 
   const [mode, setModeState] = useTracked<Mode>("standard");
   const [phase, setPhase] = useTracked<Phase>("setup");
@@ -144,7 +145,9 @@ export function useGameState() {
   });
 
   const [priority, setPriority] = useTracked<PlayerId | null>(null);
-  const [coinResult, setCoinResult] = useTracked<"heads" | "tails" | null>(null);
+  const [coinResult, setCoinResult] = useTracked<"heads" | "tails" | null>(
+    null,
+  );
 
   const [banned, setBanned] = useTracked<string[]>([]);
   const [banIndex, setBanIndex] = useTracked(0);
@@ -157,14 +160,17 @@ export function useGameState() {
   });
 
   // ----- Drafting-event state -----
-  const [activeDraftEvent, setActiveDraftEvent] = useTracked<DraftEventDef | null>(null);
+  const [activeDraftEvent, setActiveDraftEvent] =
+    useTracked<DraftEventDef | null>(null);
   const [draftEventLog, setDraftEventLog] = useTracked<DraftEventDef[]>([]);
   const [gatekeeperActive, setGatekeeperActive] = useTracked(false);
   const [pickRestriction, setPickRestriction] = useTracked<
     Record<PlayerId, PickRestriction | null>
   >({ p1: null, p2: null });
   const [extraBans, setExtraBans] = useTracked<ExtraBanTurn[] | null>(null);
-  const [waveLockedCategories, setWaveLockedCategories] = useTracked<string[]>([]);
+  const [waveLockedCategories, setWaveLockedCategories] = useTracked<string[]>(
+    [],
+  );
 
   const [round, setRound] = useTracked(1);
   const [roundWins, setRoundWins] = useTracked<Record<PlayerId, number>>({
@@ -174,14 +180,17 @@ export function useGameState() {
 
   // --- Round-loop state (boss roll -> squad select -> score submit) ---
   // Consecutive round wins inside overtime (round 10+). Resets on a loss or draw.
-  const [overtimeStreak, setOvertimeStreak] = useTracked<Record<PlayerId, number>>({
+  const [overtimeStreak, setOvertimeStreak] = useTracked<
+    Record<PlayerId, number>
+  >({
     p1: 0,
     p2: 0,
   });
   // Who won the round currently being resolved. Held in state because the loser
   // picks agents to remove on a later render, and the match result can only be
   // decided once that removal is finished.
-  const [pendingRoundWinner, setPendingRoundWinner] = useTracked<PlayerId | null>(null);
+  const [pendingRoundWinner, setPendingRoundWinner] =
+    useTracked<PlayerId | null>(null);
   const [roundStage, setRoundStage] = useTracked<RoundStage>("boss");
   const [currentBoss, setCurrentBoss] = useTracked<Boss | null>(null);
   const [squads, setSquads] = useTracked<Record<PlayerId, string[]>>({
@@ -192,9 +201,9 @@ export function useGameState() {
     Record<PlayerId, boolean>
   >({ p1: false, p2: false });
   // agent id -> rounds of cooldown remaining (0/absent = fully available)
-  const [grayedOut, setGrayedOut] = useTracked<Record<PlayerId, Record<string, number>>>(
-    { p1: {}, p2: {} },
-  );
+  const [grayedOut, setGrayedOut] = useTracked<
+    Record<PlayerId, Record<string, number>>
+  >({ p1: {}, p2: {} });
   const [submitted, setSubmitted] = useTracked<Record<PlayerId, boolean>>({
     p1: false,
     p2: false,
@@ -211,7 +220,9 @@ export function useGameState() {
     p1: { minutes: "", seconds: "" },
     p2: { minutes: "", seconds: "" },
   });
-  const [pendingRemovals, setPendingRemovals] = useTracked<PendingRemoval[]>([]);
+  const [pendingRemovals, setPendingRemovals] = useTracked<PendingRemoval[]>(
+    [],
+  );
   const [removalSelection, setRemovalSelection] = useTracked<string[]>([]);
   const [roundLog, setRoundLog] = useTracked<RoundLogEntry[]>([]);
 
@@ -219,56 +230,79 @@ export function useGameState() {
   // Bumped when a tied round is replayed, so the replay can be resolved again.
   const [roundAttempt, setRoundAttempt] = useTracked(0);
   // Every agent eliminated FROM each player's roster (Necromancy / Reinforcements).
-  const [eliminatedPool, setEliminatedPool] = useTracked<Record<PlayerId, Agent[]>>({
+  const [eliminatedPool, setEliminatedPool] = useTracked<
+    Record<PlayerId, Agent[]>
+  >({
     p1: [],
     p2: [],
   });
   // Overworked fatigue (kept apart from normal cooldown so Preset Teams can wipe
   // cooldowns without wiping fatigue).
-  const [fatigue, setFatigue] = useTracked<Record<PlayerId, Record<string, number>>>({
+  const [fatigue, setFatigue] = useTracked<
+    Record<PlayerId, Record<string, number>>
+  >({
     p1: {},
     p2: {},
   });
   // Overtime Contract: agents that are never on cooldown / fatigued again.
-  const [immune, setImmune] = useTracked<Record<PlayerId, string[]>>({ p1: [], p2: [] });
+  const [immune, setImmune] = useTracked<Record<PlayerId, string[]>>({
+    p1: [],
+    p2: [],
+  });
   // Every agent each player has put in a squad (Horizontal Investment).
-  const [playedHistory, setPlayedHistory] = useTracked<Record<PlayerId, string[]>>({
+  const [playedHistory, setPlayedHistory] = useTracked<
+    Record<PlayerId, string[]>
+  >({
     p1: [],
     p2: [],
   });
   // Emergency Reinforcements: a loss costs this many agents (0 = the normal 2).
-  const [lossPenalty, setLossPenalty] = useTracked<Record<PlayerId, number>>({ p1: 0, p2: 0 });
-  const [roundEffects, setRoundEffects] = useTracked<RoundEffects>(EMPTY_EFFECTS);
+  const [lossPenalty, setLossPenalty] = useTracked<Record<PlayerId, number>>({
+    p1: 0,
+    p2: 0,
+  });
+  const [roundEffects, setRoundEffects] =
+    useTracked<RoundEffects>(EMPTY_EFFECTS);
 
   // ---- the between-round screens ----
   const [interludeQueue, setInterludeQueue] = useTracked<InterludeKind[]>([]);
   const [affixOffer, setAffixOffer] = useTracked<AffixOffer | null>(null);
   const [affixChoice, setAffixChoice] = useTracked<AffixChoice | null>(null);
   const [affixSelection, setAffixSelection] = useTracked<string[]>([]);
-  const [necroStage, setNecroStage] = useTracked<"sacrifice" | "revive">("sacrifice");
+  const [necroStage, setNecroStage] = useTracked<"sacrifice" | "revive">(
+    "sacrifice",
+  );
   const [necroSacrificed, setNecroSacrificed] = useTracked<string[]>([]);
   const [modifierRoll, setModifierRoll] = useTracked<ModifierDef | null>(null);
 
   // ---- squad building that involves the opponent (Puppeteer / Mind Control) ----
   // controlPicks[p] = the agent the OPPONENT chose for p's last slot.
-  const [controlPicks, setControlPicks] = useTracked<Record<PlayerId, string | null>>({
+  const [controlPicks, setControlPicks] = useTracked<
+    Record<PlayerId, string | null>
+  >({
     p1: null,
     p2: null,
   });
-  const [controlLocked, setControlLocked] = useTracked<Record<PlayerId, boolean>>({
+  const [controlLocked, setControlLocked] = useTracked<
+    Record<PlayerId, boolean>
+  >({
     p1: false,
     p2: false,
   });
   // Armory Swap: after both squads are confirmed, each player plays the other's.
   const [swapped, setSwapped] = useTracked(false);
   // Tunnel Vision: the random agent each player is forced to bring (can't be removed).
-  const [forcedPick, setForcedPick] = useTracked<Record<PlayerId, string | null>>({
+  const [forcedPick, setForcedPick] = useTracked<
+    Record<PlayerId, string | null>
+  >({
     p1: null,
     p2: null,
   });
   // Soul Stone / Invitation items put in this round's squad -> the agent each one
   // turned into. Cleared whenever squads are rebuilt.
-  const [morphChoices, setMorphChoices] = useTracked<Record<PlayerId, Record<string, string>>>({
+  const [morphChoices, setMorphChoices] = useTracked<
+    Record<PlayerId, Record<string, string>>
+  >({
     p1: {},
     p2: {},
   });
@@ -302,13 +336,21 @@ export function useGameState() {
     claimedTurnsRef.current.add(key);
     return true;
   }
-  const lockedSquadRef = useRef<Record<PlayerId, boolean>>({ p1: false, p2: false });
-  const controlLockedRef = useRef<Record<PlayerId, boolean>>({ p1: false, p2: false });
+  const lockedSquadRef = useRef<Record<PlayerId, boolean>>({
+    p1: false,
+    p2: false,
+  });
+  const controlLockedRef = useRef<Record<PlayerId, boolean>>({
+    p1: false,
+    p2: false,
+  });
 
   // How this round's squads get built.
   const modId = roundEffects.modifier?.id ?? null;
   const mindControlTarget: PlayerId | null =
-    roundEffects.affix?.id === "mind-control" ? roundEffects.affix.target : null;
+    roundEffects.affix?.id === "mind-control"
+      ? roundEffects.affix.target
+      : null;
   // Puppeteer: both pick 2. Mind Control: only the leader picks 2. Otherwise 3.
   function mainSizeOf(p: PlayerId): number {
     return modId === "puppeteer" || mindControlTarget === p ? 2 : 3;
@@ -339,12 +381,19 @@ export function useGameState() {
     });
   }
   // What the squad screen grays out: rounds-left for each restricted agent.
-  const effectiveCooldowns: Record<PlayerId, Record<string, number>> = { p1: {}, p2: {} };
+  const effectiveCooldowns: Record<PlayerId, Record<string, number>> = {
+    p1: {},
+    p2: {},
+  };
   (["p1", "p2"] as PlayerId[]).forEach((p) => {
     const tiers = tiersFor(p);
     Object.keys(tiers).forEach((id) => {
       if ((tiers[id] ?? 0) > 0)
-        effectiveCooldowns[p][id] = Math.max(grayedOut[p][id] ?? 0, fatigue[p][id] ?? 0, 1);
+        effectiveCooldowns[p][id] = Math.max(
+          grayedOut[p][id] ?? 0,
+          fatigue[p][id] ?? 0,
+          1,
+        );
     });
   });
 
@@ -387,7 +436,9 @@ export function useGameState() {
   }
 
   function tossCoin() {
-    const result = memoRoll("coin", null, () => (Math.random() < 0.5 ? "heads" : "tails"));
+    const result = memoRoll("coin", null, () =>
+      Math.random() < 0.5 ? "heads" : "tails",
+    );
     setCoinResult(result);
     setPriority(result === "heads" ? "p1" : "p2");
   }
@@ -471,7 +522,8 @@ export function useGameState() {
   function canPick(p: PlayerId, a: Agent, r: PickRestriction | null): boolean {
     const owned = (pl: PlayerId) => rosters[pl].some((x) => x.id === a.id);
     // can never take an agent you already have; with an exclusive pool, nor one the opponent has
-    if (effectiveSharedPool ? owned(p) : owned("p1") || owned("p2")) return false;
+    if (effectiveSharedPool ? owned(p) : owned("p1") || owned("p2"))
+      return false;
     if (!r) return !banned.includes(a.id); // normal picks must be unbanned
     if (r.kind === "a-rank") return !a.s_rank && !banned.includes(a.id);
     return (
@@ -520,7 +572,9 @@ export function useGameState() {
     if (!draftItem || draftItem.type !== "pick" || !draftItem.player) return;
     const player = draftItem.player;
     const restriction = effectiveRestriction(player);
-    const pick = randomFrom(pool.filter((a) => canPick(player, a, restriction)));
+    const pick = randomFrom(
+      pool.filter((a) => canPick(player, a, restriction)),
+    );
     if (pick) draftAgent(pick); // reuse draftAgent so restriction bookkeeping stays in one place
   }
 
@@ -557,7 +611,8 @@ export function useGameState() {
   // stays fixed at exactly picksPerPlayer no matter how many of these fire.
   function hasUpcomingPick(player: PlayerId): boolean {
     return draftQueue.some(
-      (item, i) => i > draftPointer && item.type === "pick" && item.player === player,
+      (item, i) =>
+        i > draftPointer && item.type === "pick" && item.player === player,
     );
   }
 
@@ -566,7 +621,8 @@ export function useGameState() {
     setRosters((r) => ({ ...r, [player]: [...r[player], agent] }));
     setDraftQueue((q) => {
       const idx = q.findIndex(
-        (item, i) => i > draftPointer && item.type === "pick" && item.player === player,
+        (item, i) =>
+          i > draftPointer && item.type === "pick" && item.player === player,
       );
       if (idx === -1) return q;
       return [...q.slice(0, idx), ...q.slice(idx + 1)];
@@ -583,7 +639,8 @@ export function useGameState() {
   //  - Shared pool (Standard): the opponent owning it is fine.
   //  - Exclusive pool (Swiftplay / after Gatekeeper): nothing either player owns.
   function resolveForcedRandomAgent() {
-    const owns = (p: PlayerId, id: string) => rosters[p].some((a) => a.id === id);
+    const owns = (p: PlayerId, id: string) =>
+      rosters[p].some((a) => a.id === id);
     const usable = (p: PlayerId, a: Agent) =>
       !banned.includes(a.id) &&
       !owns(p, a.id) &&
@@ -591,10 +648,17 @@ export function useGameState() {
 
     const { p1Pick, p2Pick } = memoRoll(
       `frand:${draftPointer}`,
-      { banned, shared: effectiveSharedPool, p1: idsOf(rosters.p1), p2: idsOf(rosters.p2) },
+      {
+        banned,
+        shared: effectiveSharedPool,
+        p1: idsOf(rosters.p1),
+        p2: idsOf(rosters.p2),
+      },
       () => {
         const first = randomFrom(pool.filter((a) => usable("p1", a)));
-        const second = randomFrom(pool.filter((a) => usable("p2", a) && a.id !== first?.id));
+        const second = randomFrom(
+          pool.filter((a) => usable("p2", a) && a.id !== first?.id),
+        );
         return { p1Pick: first, p2Pick: second };
       },
     );
@@ -619,18 +683,26 @@ export function useGameState() {
         return; // extra-ban sub-sequence takes over; queue resumes once it empties
       }
       case "ban-2x": {
-        setExtraBans(buildAlternatingTurns(peekNextScheduledPlayer(), 4, false));
+        setExtraBans(
+          buildAlternatingTurns(peekNextScheduledPlayer(), 4, false),
+        );
         return;
       }
       case "ban-1x": {
-        setExtraBans(buildAlternatingTurns(peekNextScheduledPlayer(), 2, false));
+        setExtraBans(
+          buildAlternatingTurns(peekNextScheduledPlayer(), 2, false),
+        );
         return;
       }
       case "forced-downgrade": {
         // Applies to each player's NEXT pick only (not their whole next run of picks).
         setPickRestriction({
-          p1: hasUpcomingPick("p1") ? { kind: "a-rank", picksRemaining: 1 } : null,
-          p2: hasUpcomingPick("p2") ? { kind: "a-rank", picksRemaining: 1 } : null,
+          p1: hasUpcomingPick("p1")
+            ? { kind: "a-rank", picksRemaining: 1 }
+            : null,
+          p2: hasUpcomingPick("p2")
+            ? { kind: "a-rank", picksRemaining: 1 }
+            : null,
         });
         advanceDraft();
         return;
@@ -692,7 +764,10 @@ export function useGameState() {
     const turn = extraBans[0];
     const eligible = pool.filter((a) => {
       if (banned.includes(a.id)) return false;
-      if (turn.enforceCategoryLock && waveLockedCategories.includes(groupForSpecialty(a.specialty))) {
+      if (
+        turn.enforceCategoryLock &&
+        waveLockedCategories.includes(groupForSpecialty(a.specialty))
+      ) {
         return false;
       }
       return true;
@@ -705,8 +780,10 @@ export function useGameState() {
 
   function rollBoss() {
     setCurrentBoss(
-      memoRoll(`boss:${round}:${roundAttempt}`, null, () =>
-        BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)],
+      memoRoll(
+        `boss:${round}:${roundAttempt}`,
+        null,
+        () => BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)],
       ),
     );
   }
@@ -759,7 +836,9 @@ export function useGameState() {
     if (mod === "preset-teams") {
       // The team is handed out, so the selection screen is skipped.
       // one team, both players (true mirror)
-      const team = memoRoll(`preset:${round}:${roundAttempt}`, null, () => rollPresetTeam(pool));
+      const team = memoRoll(`preset:${round}:${roundAttempt}`, null, () =>
+        rollPresetTeam(pool),
+      );
       setSquads({ p1: team, p2: team });
       setSquadsConfirmed({ p1: true, p2: true });
       lockedSquadRef.current = { p1: true, p2: true };
@@ -786,7 +865,11 @@ export function useGameState() {
   // restriction tiers must be picked first; only then do higher ones unlock.
   function isSquadEligible(player: PlayerId, agentId: string): boolean {
     // an agent that one of the squad's morph items already became can't also be picked
-    if (!squads[player].includes(agentId) && formsInSquad(player).includes(agentId)) return false;
+    if (
+      !squads[player].includes(agentId) &&
+      formsInSquad(player).includes(agentId)
+    )
+      return false;
     return isSquadPickAllowed(
       rosters[player].map((a) => a.id),
       tiersFor(player),
@@ -816,7 +899,10 @@ export function useGameState() {
       pool,
       banned,
       ownedIds: ownedIdsOf(p),
-      takenIds: [...squads[p].filter((id) => !isMorphItem(id)), ...formsInSquad(p, itemId)],
+      takenIds: [
+        ...squads[p].filter((id) => !isMorphItem(id)),
+        ...formsInSquad(p, itemId),
+      ],
     });
   }
 
@@ -829,10 +915,18 @@ export function useGameState() {
     if (!squads[p].includes(itemId)) {
       if (squads[p].length >= mainSizeOf(p)) return;
       if (
-        !isSquadPickAllowed(ownedIdsOf(p), tiersFor(p), squads[p], itemId, roundEffects.revivedLock[p])
+        !isSquadPickAllowed(
+          ownedIdsOf(p),
+          tiersFor(p),
+          squads[p],
+          itemId,
+          roundEffects.revivedLock[p],
+        )
       )
         return;
-      setSquads((s) => (s[p].includes(itemId) ? s : { ...s, [p]: [...s[p], itemId] }));
+      setSquads((s) =>
+        s[p].includes(itemId) ? s : { ...s, [p]: [...s[p], itemId] },
+      );
     }
     setMorphChoices((m) => ({ ...m, [p]: { ...m[p], [itemId]: agentId } }));
   }
@@ -851,7 +945,10 @@ export function useGameState() {
         pool,
         banned,
         ownedIds: ownedIdsOf(p),
-        takenIds: [...squad.filter((x) => !isMorphItem(x)), ...Object.values(out)],
+        takenIds: [
+          ...squad.filter((x) => !isMorphItem(x)),
+          ...Object.values(out),
+        ],
       });
       const pick = randomFrom(options);
       if (pick) out[id] = pick.id;
@@ -860,7 +957,9 @@ export function useGameState() {
   }
 
   function morphsResolved(p: PlayerId): boolean {
-    return squads[p].filter(isMorphItem).every((id) => Boolean(morphChoices[p][id]));
+    return squads[p]
+      .filter(isMorphItem)
+      .every((id) => Boolean(morphChoices[p][id]));
   }
 
   function toggleSquadAgent(player: PlayerId, agent: Agent) {
@@ -884,7 +983,10 @@ export function useGameState() {
       if (current.includes(agent.id)) {
         // Deselecting an agent can make a picked restricted agent illegal again.
         const without = current.filter((id) => id !== agent.id);
-        return { ...s, [player]: sanitizeSquad(rosterIds, tiers, without, lock, fixed) };
+        return {
+          ...s,
+          [player]: sanitizeSquad(rosterIds, tiers, without, lock, fixed),
+        };
       }
       if (current.length >= size) return s; // this step only takes `size` agents
       if (isMorphItem(agent.id)) return s; // morph items are added through chooseMorph (the popup)
@@ -894,7 +996,8 @@ export function useGameState() {
           .some((id) => morphChoices[player][id] === agent.id)
       )
         return s; // a morph item in this squad already became this agent
-      if (!isSquadPickAllowed(rosterIds, tiers, current, agent.id, lock)) return s;
+      if (!isSquadPickAllowed(rosterIds, tiers, current, agent.id, lock))
+        return s;
       return { ...s, [player]: [...current, agent.id] };
     });
   }
@@ -962,7 +1065,10 @@ export function useGameState() {
     const target = other(controller);
     if (!controlOpenFor(target) || controlLockedRef.current[target]) return;
     if (!isControlEligible(controller, agent.id)) return;
-    setControlPicks((c) => ({ ...c, [target]: c[target] === agent.id ? null : agent.id }));
+    setControlPicks((c) => ({
+      ...c,
+      [target]: c[target] === agent.id ? null : agent.id,
+    }));
   }
 
   function lockControl(target: PlayerId, agentId: string) {
@@ -993,9 +1099,13 @@ export function useGameState() {
     const target = other(controller);
     if (!controlOpenFor(target) || controlLockedRef.current[target]) return;
     const current = controlPicks[target];
-    const options = rosters[target].filter((a) => isControlEligible(controller, a.id));
+    const options = rosters[target].filter((a) =>
+      isControlEligible(controller, a.id),
+    );
     const chosen =
-      current && options.some((a) => a.id === current) ? current : randomFrom(options)?.id;
+      current && options.some((a) => a.id === current)
+        ? current
+        : randomFrom(options)?.id;
     if (chosen) lockControl(target, chosen);
   }
 
@@ -1049,11 +1159,13 @@ export function useGameState() {
     const loser: PlayerId = submitted.p1 ? "p2" : "p1";
     const t1 =
       submitted.p1 && timeInputs.p1.seconds !== ""
-        ? Number(timeInputs.p1.minutes || 0) * 60 + Number(timeInputs.p1.seconds)
+        ? Number(timeInputs.p1.minutes || 0) * 60 +
+          Number(timeInputs.p1.seconds)
         : 0;
     const t2 =
       submitted.p2 && timeInputs.p2.seconds !== ""
-        ? Number(timeInputs.p2.minutes || 0) * 60 + Number(timeInputs.p2.seconds)
+        ? Number(timeInputs.p2.minutes || 0) * 60 +
+          Number(timeInputs.p2.seconds)
         : 0;
     finalizeRound(loser, t1, t2, "timeout");
   }
@@ -1106,7 +1218,14 @@ export function useGameState() {
     const winnerOfRound = loser ? other(loser) : null;
     setRoundLog((log) => [
       ...log,
-      { round, t1, t2, winner: winnerOfRound, boss: currentBoss?.name, outcome },
+      {
+        round,
+        t1,
+        t2,
+        winner: winnerOfRound,
+        boss: currentBoss?.name,
+        outcome,
+      },
     ]);
     recordPlayed();
 
@@ -1122,7 +1241,13 @@ export function useGameState() {
 
     // Removal takes `count` agents; a loser who couldn't field a full squad
     // afterwards has lost the match.
-    if (lossEndsMatch(rosters[loser].length, cfg.minRoster, removalCountFor(loser))) {
+    if (
+      lossEndsMatch(
+        rosters[loser].length,
+        cfg.minRoster,
+        removalCountFor(loser),
+      )
+    ) {
       setWinner(other(loser));
       setPhase("gameover");
       return;
@@ -1150,12 +1275,16 @@ export function useGameState() {
     recordPlayed();
     setPendingRoundWinner(null); // nobody won this round
 
-    if (lossEndsMatch(rosters.p1.length, cfg.minRoster, removalCountFor("p1"))) {
+    if (
+      lossEndsMatch(rosters.p1.length, cfg.minRoster, removalCountFor("p1"))
+    ) {
       setWinner("p2");
       setPhase("gameover");
       return;
     }
-    if (lossEndsMatch(rosters.p2.length, cfg.minRoster, removalCountFor("p2"))) {
+    if (
+      lossEndsMatch(rosters.p2.length, cfg.minRoster, removalCountFor("p2"))
+    ) {
       setWinner("p1");
       setPhase("gameover");
       return;
@@ -1170,8 +1299,12 @@ export function useGameState() {
   // Same round number, new boss, fresh squads. Active modifiers/affixes stay on.
   function replayRound(eliminated: Record<PlayerId, string[]>) {
     setGrayedOut((g) => ({
-      p1: Object.fromEntries(Object.entries(g.p1).filter(([id]) => !eliminated.p1.includes(id))),
-      p2: Object.fromEntries(Object.entries(g.p2).filter(([id]) => !eliminated.p2.includes(id))),
+      p1: Object.fromEntries(
+        Object.entries(g.p1).filter(([id]) => !eliminated.p1.includes(id)),
+      ),
+      p2: Object.fromEntries(
+        Object.entries(g.p2).filter(([id]) => !eliminated.p2.includes(id)),
+      ),
     }));
     setEliminatedThisRound({ p1: [], p2: [] });
     setRoundAttempt((a) => a + 1);
@@ -1195,7 +1328,10 @@ export function useGameState() {
   function finishRoundAndAdvance(
     eliminated: Record<PlayerId, string[]>,
     roundWinner: PlayerId | null,
-    projected: { rosters: Record<PlayerId, Agent[]>; eliminatedPool: Record<PlayerId, Agent[]> },
+    projected: {
+      rosters: Record<PlayerId, Agent[]>;
+      eliminatedPool: Record<PlayerId, Agent[]>;
+    },
   ) {
     if (roundWinner === null) {
       replayRound(eliminated); // double timeout: removals are done, the round repeats
@@ -1218,7 +1354,10 @@ export function useGameState() {
     }
 
     const presetRound = roundEffects.modifier?.id === "preset-teams";
-    const nextGrayed: Record<PlayerId, Record<string, number>> = { p1: {}, p2: {} };
+    const nextGrayed: Record<PlayerId, Record<string, number>> = {
+      p1: {},
+      p2: {},
+    };
     (["p1", "p2"] as PlayerId[]).forEach((p) => {
       // Preset Teams wipes every normal cooldown (the agents were handed out).
       nextGrayed[p] = presetRound
@@ -1236,7 +1375,11 @@ export function useGameState() {
     // Overworked fatigue ticks down once per decided round.
     setFatigue((f) => {
       const tick = (m: Record<string, number>) =>
-        Object.fromEntries(Object.entries(m).filter(([, n]) => n - 1 > 0).map(([id, n]) => [id, n - 1]));
+        Object.fromEntries(
+          Object.entries(m)
+            .filter(([, n]) => n - 1 > 0)
+            .map(([id, n]) => [id, n - 1]),
+        );
       return { p1: tick(f.p1), p2: tick(f.p2) };
     });
     setRoundEffects(EMPTY_EFFECTS); // everything else lasted this one round
@@ -1267,17 +1410,23 @@ export function useGameState() {
   function confirmRemoval() {
     const current = pendingRemovals[0];
     if (!current || removalSelection.length !== current.count) return;
-    if (!(current.locked ?? []).every((id) => removalSelection.includes(id))) return;
+    if (!(current.locked ?? []).every((id) => removalSelection.includes(id)))
+      return;
     const { player } = current;
 
-    const removedAgents = rosters[player].filter((a) => removalSelection.includes(a.id));
+    const removedAgents = rosters[player].filter((a) =>
+      removalSelection.includes(a.id),
+    );
     const nextRosters = {
       ...rosters,
       [player]: rosters[player].filter((a) => !removalSelection.includes(a.id)),
     };
     const nextPool = {
       ...eliminatedPool,
-      [player]: [...eliminatedPool[player], ...removedAgents.filter((a) => !isSoulStone(a.id))],
+      [player]: [
+        ...eliminatedPool[player],
+        ...removedAgents.filter((a) => !isSoulStone(a.id)),
+      ],
     };
     setRosters(nextRosters);
     setEliminatedPool(nextPool);
@@ -1304,7 +1453,10 @@ export function useGameState() {
   // ===================== Between-round screens =====================
 
   // Shows the next screen in the queue (affix / modifier), or goes to the boss roll.
-  function startInterlude(queue: InterludeKind[], ctx: InterludeContext | null) {
+  function startInterlude(
+    queue: InterludeKind[],
+    ctx: InterludeContext | null,
+  ) {
     if (queue.length === 0) {
       setInterludeQueue([]);
       setRoundStage("boss");
@@ -1314,7 +1466,9 @@ export function useGameState() {
     setInterludeQueue(rest);
 
     if (head === "modifier") {
-      const roll = memoRoll(`modroll:${round}:${queue.join("+")}`, null, () => rollModifier());
+      const roll = memoRoll(`modroll:${round}:${queue.join("+")}`, null, () =>
+        rollModifier(),
+      );
       if (!roll) {
         startInterlude(rest, ctx);
         return;
@@ -1363,7 +1517,10 @@ export function useGameState() {
     const def = kind === "positive" ? affixOffer.positive : affixOffer.negative;
     if (!def) return;
     if (!claimTurn(`affix-choice:${round}`)) return; // first click wins, even in the same render
-    setAffixChoice({ def, target: kind === "positive" ? affixOffer.chooser : affixOffer.leader });
+    setAffixChoice({
+      def,
+      target: kind === "positive" ? affixOffer.chooser : affixOffer.leader,
+    });
     setAffixSelection([]);
     setNecroStage("sacrifice");
     setNecroSacrificed([]);
@@ -1385,7 +1542,9 @@ export function useGameState() {
     switch (def.id) {
       case "kamikaze":
         if (!kamikazeApplies(interludeCtx, target))
-          return wasted("NO EFFECT — Kamikaze can’t touch this player right now.");
+          return wasted(
+            "NO EFFECT — Kamikaze can’t touch this player right now.",
+          );
         return {
           candidates: byId(lastSquadSurvivors(interludeCtx, target)),
           min: 2,
@@ -1395,8 +1554,15 @@ export function useGameState() {
       case "overtime-contract": {
         const c = byId(contractCandidates(interludeCtx, target));
         return c.length
-          ? { candidates: c, min: 1, max: 1, label: "CHOOSE 1 AGENT TO WORK OVERTIME" }
-          : wasted("NO EFFECT — nobody from last round is left to work overtime.");
+          ? {
+              candidates: c,
+              min: 1,
+              max: 1,
+              label: "CHOOSE 1 AGENT TO WORK OVERTIME",
+            }
+          : wasted(
+              "NO EFFECT — nobody from last round is left to work overtime.",
+            );
       }
       case "emergency-reinforcements":
         return {
@@ -1454,10 +1620,21 @@ export function useGameState() {
     setFatigue((f) => ({ ...f, [p]: strip(f[p]) }));
   }
 
-  function finishAffix(def: AffixChoice["def"], target: PlayerId, note: string) {
+  function finishAffix(
+    def: AffixChoice["def"],
+    target: PlayerId,
+    note: string,
+  ) {
     setRoundEffects((e) => ({
       ...e,
-      affix: { id: def.id, title: def.title, desc: def.desc, polarity: def.polarity, target, note },
+      affix: {
+        id: def.id,
+        title: def.title,
+        desc: def.desc,
+        polarity: def.polarity,
+        target,
+        note,
+      },
     }));
     setAffixOffer(null);
     setAffixChoice(null);
@@ -1475,45 +1652,76 @@ export function useGameState() {
     const sel = affixSelection;
 
     // Necromancy, step 1: the list of your own agents. Nothing chosen = Skip.
-    if (def.id === "spell-of-necromancy" && necroStage === "sacrifice" && sel.length > 0) {
+    if (
+      def.id === "spell-of-necromancy" &&
+      necroStage === "sacrifice" &&
+      sel.length > 0
+    ) {
       setNecroSacrificed(sel);
       setAffixSelection([]);
       setNecroStage("revive");
       return;
     }
-    if (spec && !spec.noEffect && !spec.optional && sel.length < spec.min) return;
-    if (spec && !spec.noEffect && necroStage === "revive" && sel.length !== spec.min) return;
+    if (spec && !spec.noEffect && !spec.optional && sel.length < spec.min)
+      return;
+    if (
+      spec &&
+      !spec.noEffect &&
+      necroStage === "revive" &&
+      sel.length !== spec.min
+    )
+      return;
     if (!claimTurn(`affix:${round}`)) return; // confirm once per screen
 
     const dropped = (ids: string[]) => {
-      const agents = rosters[target].filter((a) => ids.includes(a.id) && !isSoulStone(a.id));
-      setEliminatedPool((ep) => ({ ...ep, [target]: [...ep[target], ...agents] }));
+      const agents = rosters[target].filter(
+        (a) => ids.includes(a.id) && !isSoulStone(a.id),
+      );
+      setEliminatedPool((ep) => ({
+        ...ep,
+        [target]: [...ep[target], ...agents],
+      }));
       dropCooldownEntries(target, ids);
     };
     let note = "";
 
     switch (def.id) {
       case "horizontal-investment":
-        setRoundEffects((e) => ({ ...e, horizontal: { ...e.horizontal, [target]: true } }));
+        setRoundEffects((e) => ({
+          ...e,
+          horizontal: { ...e.horizontal, [target]: true },
+        }));
         break;
       case "hold-on-wait-for-me":
-        setRoundEffects((e) => ({ ...e, timePenalty: { ...e.timePenalty, [target]: 10 } }));
+        setRoundEffects((e) => ({
+          ...e,
+          timePenalty: { ...e.timePenalty, [target]: 10 },
+        }));
         break;
       case "overworked": {
         const victim = memoRoll(
           `overworked:${round}:${target}`,
           { roster: idsOf(rosters[target]), immune: immune[target] },
-          () => randomFrom(rosters[target].filter((a) => !immune[target].includes(a.id))),
+          () =>
+            randomFrom(
+              rosters[target].filter((a) => !immune[target].includes(a.id)),
+            ),
         );
         if (victim) {
-          setFatigue((f) => ({ ...f, [target]: { ...f[target], [victim.id]: 2 } }));
+          setFatigue((f) => ({
+            ...f,
+            [target]: { ...f[target], [victim.id]: 2 },
+          }));
           note = `${victim.name} is fatigued for 2 rounds.`;
         }
         break;
       }
       case "kamikaze":
         if (!spec?.noEffect && sel.length === 2) {
-          setRosters((r) => ({ ...r, [target]: r[target].filter((a) => !sel.includes(a.id)) }));
+          setRosters((r) => ({
+            ...r,
+            [target]: r[target].filter((a) => !sel.includes(a.id)),
+          }));
           dropped(sel);
           note = "2 Agents eliminated.";
         } else note = "No effect.";
@@ -1526,7 +1734,9 @@ export function useGameState() {
         } else note = "No effect.";
         break;
       case "emergency-reinforcements": {
-        const back = ownRevivable(interludeCtx, target).find((a) => a.id === sel[0]);
+        const back = ownRevivable(interludeCtx, target).find(
+          (a) => a.id === sel[0],
+        );
         if (back) {
           setRosters((r) => ({ ...r, [target]: [...r[target], back] }));
           setEliminatedPool((ep) => takeFromPool(ep, target, [back.id]));
@@ -1552,26 +1762,42 @@ export function useGameState() {
         }
         break;
       case "spell-of-necromancy": {
-        if (necroSacrificed.length === 0 || sel.length !== necroSacrificed.length) {
+        if (
+          necroSacrificed.length === 0 ||
+          sel.length !== necroSacrificed.length
+        ) {
           note = "Skipped — no Agents swapped.";
           break;
         }
-        const revived = anyRevivable(interludeCtx, target).filter((a) => sel.includes(a.id));
+        const revived = anyRevivable(interludeCtx, target).filter((a) =>
+          sel.includes(a.id),
+        );
         setRosters((r) => ({
           ...r,
-          [target]: [...r[target].filter((a) => !necroSacrificed.includes(a.id)), ...revived],
+          [target]: [
+            ...r[target].filter((a) => !necroSacrificed.includes(a.id)),
+            ...revived,
+          ],
         }));
-        const sacrificedAgents = rosters[target].filter((a) => necroSacrificed.includes(a.id));
+        const sacrificedAgents = rosters[target].filter((a) =>
+          necroSacrificed.includes(a.id),
+        );
         setEliminatedPool((ep) => {
           const taken = takeFromPool(ep, target, sel);
-          return { ...taken, [target]: [...taken[target], ...sacrificedAgents] };
+          return {
+            ...taken,
+            [target]: [...taken[target], ...sacrificedAgents],
+          };
         });
         dropCooldownEntries(target, necroSacrificed);
         if (revived.length === 2) {
           // the two revived agents can't both play in the next battle (unless forced)
           setRoundEffects((e) => ({
             ...e,
-            revivedLock: { ...e.revivedLock, [target]: revived.map((a) => a.id) },
+            revivedLock: {
+              ...e.revivedLock,
+              [target]: revived.map((a) => a.id),
+            },
           }));
         }
         note = `Swapped ${necroSacrificed.length} Agent${necroSacrificed.length > 1 ? "s" : ""}.`;
@@ -1587,7 +1813,11 @@ export function useGameState() {
     if (!claimTurn(`mod:${round}:${interludeQueue.length}`)) return;
     setRoundEffects((e) => ({
       ...e,
-      modifier: { id: modifierRoll.id, title: modifierRoll.title, hidden: !!modifierRoll.secret },
+      modifier: {
+        id: modifierRoll.id,
+        title: modifierRoll.title,
+        hidden: !!modifierRoll.secret,
+      },
     }));
     setModifierRoll(null);
     startInterlude(interludeQueue, null);
@@ -1666,15 +1896,37 @@ export function useGameState() {
   // squad, a confirmed time, an affix choice...). Tentative clicks - toggling an
   // agent, typing a time - don't count, so one rewind press undoes one real action.
   const milestoneKey = JSON.stringify([
-    phase, roundStage, round, roundAttempt, winner, priority, coinResult,
-    banned.length, banIndex, draftPointer, extraBans?.length ?? -1,
-    activeDraftEvent?.id ?? null, draftEventLog.length,
-    rosters.p1.length, rosters.p2.length, roundWins, roundLog.length,
-    squadsConfirmed, controlLocked, submitted, swapped,
-    pendingRemovals.length, interludeQueue.length,
-    affixOffer ? 1 : 0, affixChoice?.def.id ?? null, necroStage, necroSacrificed.length,
-    modifierRoll?.id ?? null, currentBoss?.name ?? null,
-    roundEffects.modifier?.id ?? null, roundEffects.affix?.id ?? null,
+    phase,
+    roundStage,
+    round,
+    roundAttempt,
+    winner,
+    priority,
+    coinResult,
+    banned.length,
+    banIndex,
+    draftPointer,
+    extraBans?.length ?? -1,
+    activeDraftEvent?.id ?? null,
+    draftEventLog.length,
+    rosters.p1.length,
+    rosters.p2.length,
+    roundWins,
+    roundLog.length,
+    squadsConfirmed,
+    controlLocked,
+    submitted,
+    swapped,
+    pendingRemovals.length,
+    interludeQueue.length,
+    affixOffer ? 1 : 0,
+    affixChoice?.def.id ?? null,
+    necroStage,
+    necroSacrificed.length,
+    modifierRoll?.id ?? null,
+    currentBoss?.name ?? null,
+    roundEffects.modifier?.id ?? null,
+    roundEffects.affix?.id ?? null,
   ]);
 
   function takeSnapshot(): Snapshot {
@@ -1716,7 +1968,9 @@ export function useGameState() {
   function togglePause() {
     setPaused((v) => !v);
   }
-  const battleSquads: Record<PlayerId, string[]> = swapped ? { p1: squads.p2, p2: squads.p1 } : squads;
+  const battleSquads: Record<PlayerId, string[]> = swapped
+    ? { p1: squads.p2, p2: squads.p1 }
+    : squads;
   // morph forms belong to whoever built the squad, so they swap along with it
   const battleMorphs: Record<PlayerId, Record<string, string>> = swapped
     ? { p1: morphChoices.p2, p2: morphChoices.p1 }

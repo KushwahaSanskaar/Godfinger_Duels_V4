@@ -4,7 +4,7 @@ export interface Boss {
 }
 
 export const BOSS_POOL: Boss[] = [
-  { id: "primordial-nightmare", name: "Primordial Nightmare" },
-  { id: "komano-manato", name: "Komano Manato" },
-  { id: "starlight-billy", name: "Starlight Billy" },
+  { id: "1", name: "Haytor" },
+  { id: "2", name: "Infernal Revenant" },
+  { id: "3", name: "Sacrifice - Heretic Jester" },
 ];

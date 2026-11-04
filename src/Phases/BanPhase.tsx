@@ -58,8 +58,9 @@ export function BanPhase({
 
         {/* Right Information */}
         <div
-          className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"
-            }`}
+          className={`font-pixel text-2xl ${
+            timeLeft <= 10 ? "text-yellow-300" : "text-white"
+          }`}
         >
           0:{timeLeft.toString().padStart(2, "0")}
         </div>
@@ -70,13 +71,22 @@ export function BanPhase({
           banned={banned}
           showBanOverlay={true}
           unavailableGroups={bannedGroups}
-          selection={(a) => a.id === selectedAgent?.id ? (banTurn === "p2" ? "selected-p2" : "selected-p1") : "none"}
+          selection={(a) =>
+            a.id === selectedAgent?.id
+              ? banTurn === "p2"
+                ? "selected-p2"
+                : "selected-p1"
+              : "none"
+          }
           onClick={setSelectedAgent}
-          onConfirm={(a) => { onBan(a); setSelectedAgent(null); }}
+          onConfirm={(a) => {
+            onBan(a);
+            setSelectedAgent(null);
+          }}
           confirmLabel="BAN"
           confirmColor="#E63946"
         />
       </div>
-    </Card >
+    </Card>
   );
 }

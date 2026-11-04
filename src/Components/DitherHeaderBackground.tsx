@@ -33,7 +33,7 @@ export function DitherHeaderBackground({ isBan, eventActive = false }: Props) {
       setSize((prev) =>
         prev.width === width && prev.height === height
           ? prev
-          : { width, height }
+          : { width, height },
       );
     });
     observer.observe(element);
@@ -48,10 +48,12 @@ export function DitherHeaderBackground({ isBan, eventActive = false }: Props) {
     const height = Math.max(1, size.height);
     const pixelSize = Math.max(
       4,
-      Math.min(28, Math.round(BASE_PIXEL_SIZE * Math.max(
-        width / BASE_WIDTH,
-        height / BASE_HEIGHT
-      )))
+      Math.min(
+        28,
+        Math.round(
+          BASE_PIXEL_SIZE * Math.max(width / BASE_WIDTH, height / BASE_HEIGHT),
+        ),
+      ),
     );
     const canvasWidth = width * 2;
     canvas.width = canvasWidth;
@@ -66,9 +68,14 @@ export function DitherHeaderBackground({ isBan, eventActive = false }: Props) {
     const rows = Math.ceil(height / pixelSize);
     for (let row = 0; row < rows; row++) {
       const y = row * pixelSize;
-      const diagonalX = width * (0.10 + 0.02 * ((y + pixelSize / 2) / height));
+      const diagonalX = width * (0.1 + 0.02 * ((y + pixelSize / 2) / height));
       const solidStart = Math.max(0, Math.ceil(diagonalX / pixelSize + 3));
-      ctx.fillRect(solidStart * pixelSize, y, canvasWidth - solidStart * pixelSize, pixelSize);
+      ctx.fillRect(
+        solidStart * pixelSize,
+        y,
+        canvasWidth - solidStart * pixelSize,
+        pixelSize,
+      );
 
       const firstCol = Math.max(0, Math.floor(diagonalX / pixelSize - 3));
       for (let col = firstCol; col < Math.min(cols, solidStart); col++) {

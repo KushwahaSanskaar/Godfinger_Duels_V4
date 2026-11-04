@@ -49,11 +49,18 @@ function AffixCard({
     <div className={`border-4 ${t.border} ${t.bg} p-6 flex flex-col gap-4`}>
       <div className="flex justify-between items-center">
         <span className={`font-pixel text-xs ${t.text}`}>{t.tag}</span>
-        <span className={`font-pixel text-xs ${accentOf(forPlayer)}`}>FOR {forName.toUpperCase()}</span>
+        <span className={`font-pixel text-xs ${accentOf(forPlayer)}`}>
+          FOR {forName.toUpperCase()}
+        </span>
       </div>
-      <h3 className={`font-pixel text-xl ${t.text}`}>{def.title.toUpperCase()}</h3>
+      <h3 className={`font-pixel text-xl ${t.text}`}>
+        {def.title.toUpperCase()}
+      </h3>
       <p className="font-lexend text-sm text-text-primary flex-1">{def.desc}</p>
-      <button onClick={onClick} className={`w-full font-pixel text-sm py-4 px-4 ${t.button}`}>
+      <button
+        onClick={onClick}
+        className={`w-full font-pixel text-sm py-4 px-4 ${t.button}`}
+      >
         {buttonLabel}
       </button>
     </div>
@@ -86,7 +93,9 @@ export function AffixScreen({
   const { chooser, leader } = offer;
   const header = (
     <header className="flex flex-col items-center gap-2 text-center">
-      <span className="font-pixel text-sm text-event tracking-widest">◆ AFFIX ◆</span>
+      <span className="font-pixel text-sm text-event tracking-widest">
+        ◆ AFFIX ◆
+      </span>
     </header>
   );
 
@@ -96,9 +105,13 @@ export function AffixScreen({
       <div className="w-full flex flex-col items-center gap-6 py-3">
         {header}
         <p className="font-pixel text-sm text-text-primary text-center">
-          <span className={accentOf(chooser)}>{displayName(chooser).toUpperCase()}</span> IS BEHIND —
-          TAKE THE POSITIVE, OR GIVE THE NEGATIVE TO{" "}
-          <span className={accentOf(leader)}>{displayName(leader).toUpperCase()}</span>
+          <span className={accentOf(chooser)}>
+            {displayName(chooser).toUpperCase()}
+          </span>{" "}
+          IS BEHIND — TAKE THE POSITIVE, OR GIVE THE NEGATIVE TO{" "}
+          <span className={accentOf(leader)}>
+            {displayName(leader).toUpperCase()}
+          </span>
         </p>
         <div className="grid md:grid-cols-2 gap-6 w-full max-w-[1100px]">
           <AffixCard
@@ -125,7 +138,8 @@ export function AffixScreen({
   const t = THEME[def.polarity];
   const roster = pick?.candidates ?? [];
   const full = !!pick && selection.length >= pick.max;
-  const isNecroSacrifice = def.id === "spell-of-necromancy" && necroStage === "sacrifice";
+  const isNecroSacrifice =
+    def.id === "spell-of-necromancy" && necroStage === "sacrifice";
 
   let buttonLabel = "CONTINUE →";
   let canConfirm = true;
@@ -141,20 +155,26 @@ export function AffixScreen({
   return (
     <div className="w-full flex flex-col items-center gap-6 py-3">
       {header}
-      <div className={`w-full max-w-[900px] border-4 ${t.border} ${t.bg} p-6 flex flex-col gap-3`}>
+      <div
+        className={`w-full max-w-[900px] border-4 ${t.border} ${t.bg} p-6 flex flex-col gap-3`}
+      >
         <div className="flex justify-between items-center">
           <span className={`font-pixel text-xs ${t.text}`}>{t.tag}</span>
           <span className={`font-pixel text-xs ${accentOf(target)}`}>
             AFFECTS {displayName(target).toUpperCase()}
           </span>
         </div>
-        <h3 className={`font-pixel text-2xl ${t.text}`}>{def.title.toUpperCase()}</h3>
+        <h3 className={`font-pixel text-2xl ${t.text}`}>
+          {def.title.toUpperCase()}
+        </h3>
         <p className="font-lexend text-sm text-text-primary">{def.desc}</p>
       </div>
 
       {pick && (
         <div className="w-full max-w-[900px] bg-[#141420] p-5 flex flex-col gap-4">
-          <span className={`font-pixel text-sm ${accentOf(target)}`}>{pick.label}</span>
+          <span className={`font-pixel text-sm ${accentOf(target)}`}>
+            {pick.label}
+          </span>
           {pick.noEffect ? null : (
             <div className="flex flex-wrap gap-3 justify-center">
               {roster.map((agent) => {

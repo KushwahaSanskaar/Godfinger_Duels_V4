@@ -26,7 +26,8 @@ export function ActiveEffects({
           }`}
           title={affix.desc}
         >
-          {affix.polarity === "positive" ? "▲" : "▼"} {affix.title.toUpperCase()} ·{" "}
+          {affix.polarity === "positive" ? "▲" : "▼"}{" "}
+          {affix.title.toUpperCase()} ·{" "}
           {displayName(affix.target).toUpperCase()}
           {affix.note ? ` · ${affix.note}` : ""}
         </span>

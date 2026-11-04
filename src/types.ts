@@ -70,7 +70,13 @@ export interface RoundLogEntry {
 
 // "affix" / "modifier" are the between-round screens that come BEFORE the boss roll.
 // "reveal" = a secret modifier is announced after squad select, right before the round.
-export type RoundStage = "boss" | "squad" | "reveal" | "score" | "affix" | "modifier";
+export type RoundStage =
+  | "boss"
+  | "squad"
+  | "reveal"
+  | "score"
+  | "affix"
+  | "modifier";
 
 export type InterludeKind = "affix" | "modifier";
 

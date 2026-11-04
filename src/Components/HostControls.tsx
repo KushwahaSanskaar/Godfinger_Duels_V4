@@ -16,7 +16,9 @@ function loadPos(): Pos | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const p = JSON.parse(raw);
-    return typeof p?.x === "number" && typeof p?.y === "number" ? { x: p.x, y: p.y } : null;
+    return typeof p?.x === "number" && typeof p?.y === "number"
+      ? { x: p.x, y: p.y }
+      : null;
   } catch {
     return null; // storage unavailable (private mode etc.): just don't remember
   }
@@ -32,7 +34,11 @@ function savePos(p: Pos | null) {
 
 function GripIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="w-4 h-5 fill-current text-[#66667D]" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      className="w-4 h-5 fill-current text-[#66667D]"
+      aria-hidden="true"
+    >
       <circle cx="9" cy="6" r="1.7" />
       <circle cx="15" cy="6" r="1.7" />
       <circle cx="9" cy="12" r="1.7" />
@@ -171,9 +177,7 @@ export function HostControls({
 
   const button =
     "w-10 h-10 flex items-center justify-center border-2 border-[#353548] bg-[#1D1D2C] text-text-primary hover:bg-[#2A2A3E]";
-  const placement = pos
-    ? { left: pos.x, top: pos.y }
-    : undefined; // default: top-centre, positioned by the classes below
+  const placement = pos ? { left: pos.x, top: pos.y } : undefined; // default: top-centre, positioned by the classes below
   return (
     <div
       ref={barRef}
@@ -208,10 +212,14 @@ export function HostControls({
         onDoubleClick={resetPosition}
         title="Double-click to put the controls back at the top"
       >
-        <span className={`font-pixel text-[10px] ${paused ? "text-event" : "text-text-muted"}`}>
+        <span
+          className={`font-pixel text-[10px] ${paused ? "text-event" : "text-text-muted"}`}
+        >
           {paused ? "PAUSED" : "LIVE"}
         </span>
-        <span className="font-pixel text-[9px] text-[#66667D]">{Math.max(steps - 1, 0)} STEPS</span>
+        <span className="font-pixel text-[9px] text-[#66667D]">
+          {Math.max(steps - 1, 0)} STEPS
+        </span>
       </div>
       <button
         onClick={onTogglePause}

@@ -9,8 +9,19 @@ interface GameOverProps {
   onReset: () => void;
 }
 
-export function GameOver({ winner, rosters, roundWins, displayName, onReset }: GameOverProps) {
-  const winnerColor = winner === "p1" ? "text-p1" : winner === "p2" ? "text-p2" : "text-text-primary";
+export function GameOver({
+  winner,
+  rosters,
+  roundWins,
+  displayName,
+  onReset,
+}: GameOverProps) {
+  const winnerColor =
+    winner === "p1"
+      ? "text-p1"
+      : winner === "p2"
+        ? "text-p2"
+        : "text-text-primary";
 
   return (
     <div className="w-full flex flex-col gap-6 py-3">
@@ -21,11 +32,12 @@ export function GameOver({ winner, rosters, roundWins, displayName, onReset }: G
         <h2
           className={`font-pixel font-bold text-4xl md:text-6xl leading-tight ${winnerColor}`}
           style={{
-            textShadow: winner === "p1"
-              ? "5px 5px 0 #1748A1"
-              : winner === "p2"
-              ? "5px 5px 0 #972934"
-              : "5px 5px 0 #303044",
+            textShadow:
+              winner === "p1"
+                ? "5px 5px 0 #1748A1"
+                : winner === "p2"
+                  ? "5px 5px 0 #972934"
+                  : "5px 5px 0 #303044",
           }}
         >
           {winner ? "VICTORY!" : "MATCH OVER"}
@@ -49,7 +61,9 @@ export function GameOver({ winner, rosters, roundWins, displayName, onReset }: G
               {roundWins.p1}
             </div>
           </div>
-          <span className="font-pixel text-[clamp(16px,2vw,30px)] text-text-muted">—</span>
+          <span className="font-pixel text-[clamp(16px,2vw,30px)] text-text-muted">
+            —
+          </span>
           <div className="min-w-0 text-left">
             <div className="truncate font-pixel text-[clamp(10px,1.2vw,20px)] text-p2">
               {displayName("p2").toUpperCase()}
@@ -81,17 +95,22 @@ export function GameOver({ winner, rosters, roundWins, displayName, onReset }: G
                     {displayName(player).toUpperCase()}
                   </span>
                   <span className="text-xs text-text-muted uppercase tracking-widest">
-                    Final roster · {roundWins[player]} {roundWins[player] === 1 ? "round win" : "round wins"}
+                    Final roster · {roundWins[player]}{" "}
+                    {roundWins[player] === 1 ? "round win" : "round wins"}
                   </span>
                 </div>
-                <div className={`font-pixel text-lg text-right ${isWinner ? accent : "text-text-muted"}`}>
+                <div
+                  className={`font-pixel text-lg text-right ${isWinner ? accent : "text-text-muted"}`}
+                >
                   {isWinner ? "WINNER" : winner ? "DEFEAT" : "DRAW"}
                 </div>
               </div>
 
               <div className="flex flex-col gap-4 px-5 pt-5 pb-6">
                 <div className="flex justify-between items-center border-b border-[#303044] pb-2">
-                  <span className="font-pixel text-sm text-text-primary">SURVIVORS</span>
+                  <span className="font-pixel text-sm text-text-primary">
+                    SURVIVORS
+                  </span>
                   <span className={`font-pixel text-sm ${accent}`}>
                     {roster.length} REMAINING
                   </span>

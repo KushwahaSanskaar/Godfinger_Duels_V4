@@ -82,17 +82,13 @@ export function DraftPhase({
       {gatekeeperActive && (
         <div className="w-full border-2 border-p2 bg-[#30151D] px-6 py-4 text-center">
           <div className="flex items-center justify-center gap-3">
-            <span className="font-pixel text-xl text-p2">
-              ⚠
-            </span>
+            <span className="font-pixel text-xl text-p2">⚠</span>
 
             <span className="font-pixel text-lg text-white tracking-wider">
               GATEKEEPER ACTIVE
             </span>
 
-            <span className="font-pixel text-xl text-p2">
-              ⚠
-            </span>
+            <span className="font-pixel text-xl text-p2">⚠</span>
           </div>
 
           <p className="mt-2 font-mono font-bold text-md text-[#FF9099]">
@@ -100,7 +96,6 @@ export function DraftPhase({
           </p>
         </div>
       )}
-
 
       {activeEvent ? (
         <EventOverlay event={activeEvent} onAcknowledge={onResolveEvent} />
@@ -115,7 +110,9 @@ export function DraftPhase({
                 {displayName(extraBans[0].player)}'s ban
               </span>
             </div>
-            <span className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"}`}>
+            <span
+              className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"}`}
+            >
               0:{timeLeft.toString().padStart(2, "0")}
             </span>
           </HeaderStatusPortal>
@@ -129,7 +126,9 @@ export function DraftPhase({
             }
             selection={(a) =>
               a.id === selectedAgent?.id
-                ? extraBans[0].player === "p2" ? "selected-p2" : "selected-p1"
+                ? extraBans[0].player === "p2"
+                  ? "selected-p2"
+                  : "selected-p1"
                 : "none"
             }
             onClick={onAgentSelect}
@@ -152,7 +151,9 @@ export function DraftPhase({
                 {displayName(pickPlayer)}'s pick
               </span>
             </div>
-            <span className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"}`}>
+            <span
+              className={`font-pixel text-2xl ${timeLeft <= 10 ? "text-yellow-300" : "text-white"}`}
+            >
               0:{timeLeft.toString().padStart(2, "0")}
             </span>
           </HeaderStatusPortal>
@@ -167,19 +168,21 @@ export function DraftPhase({
             showBanOverlay={false}
             unavailable={(a) => {
               const ownedByCurrentPlayer = rosters[pickPlayer].some(
-                (agent) => agent.id === a.id
+                (agent) => agent.id === a.id,
               );
               const baseUnavailable = sharedPool
                 ? ownedByCurrentPlayer
                 : rosters.p1.some((agent) => agent.id === a.id) ||
-                rosters.p2.some((agent) => agent.id === a.id);
+                  rosters.p2.some((agent) => agent.id === a.id);
               if (baseUnavailable) return true;
               if (currentRestriction) {
-                if (currentRestriction.kind === "a-rank" && a.s_rank) return true;
+                if (currentRestriction.kind === "a-rank" && a.s_rank)
+                  return true;
                 if (
                   currentRestriction.kind === "specialty" &&
                   !currentRestriction.specialties?.includes(a.specialty)
-                ) return true;
+                )
+                  return true;
               }
               return false;
             }}

@@ -35,7 +35,11 @@ interface GameplayPhaseProps {
   submitted: Record<PlayerId, boolean>;
   isSquadEligible: (player: PlayerId, agentId: string) => boolean;
   timeInputs: Record<PlayerId, { minutes: string; seconds: string }>;
-  onTimeChange: (player: PlayerId, field: "minutes" | "seconds", value: string) => void;
+  onTimeChange: (
+    player: PlayerId,
+    field: "minutes" | "seconds",
+    value: string,
+  ) => void;
   onConfirmTime: (player: PlayerId) => void;
   onTimeout: () => void;
   pendingRemoval: PendingRemoval | null;
@@ -151,13 +155,25 @@ export function GameplayPhase({
     );
   }
   if (roundStage === "modifier" && modifierRoll) {
-    return <ModifierScreen modifier={modifierRoll} onAcknowledge={onAcknowledgeModifier} />;
+    return (
+      <ModifierScreen
+        modifier={modifierRoll}
+        onAcknowledge={onAcknowledgeModifier}
+      />
+    );
   }
 
   // A secret modifier is announced after squad select, right before the round.
   if (roundStage === "reveal") {
     const def = UNIVERSAL_MODIFIERS.find((m) => m.id === effects.modifier?.id);
-    if (def) return <ModifierScreen modifier={def} revealed onAcknowledge={onAcknowledgeReveal} />;
+    if (def)
+      return (
+        <ModifierScreen
+          modifier={def}
+          revealed
+          onAcknowledge={onAcknowledgeReveal}
+        />
+      );
   }
 
   // Everything that follows shows what is in force for this battle. A secret modifier

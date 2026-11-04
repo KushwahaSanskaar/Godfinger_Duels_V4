@@ -29,7 +29,10 @@ export function useTurnTimer(
       expireRef.current();
       return;
     }
-    const id = setTimeout(() => setClock({ key: turnKey, left: timeLeft - 1 }), 1000);
+    const id = setTimeout(
+      () => setClock({ key: turnKey, left: timeLeft - 1 }),
+      1000,
+    );
     return () => clearTimeout(id);
   }, [active, paused, turnKey, timeLeft]);
 

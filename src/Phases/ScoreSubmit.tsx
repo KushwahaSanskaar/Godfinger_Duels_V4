@@ -22,7 +22,11 @@ interface ScoreSubmitProps {
   morphs: Record<PlayerId, Record<string, string>>; // Soul Stone / Invitation forms, per squad owner
   timeInputs: Record<PlayerId, { minutes: string; seconds: string }>;
   submitted: Record<PlayerId, boolean>;
-  onTimeChange: (player: PlayerId, field: "minutes" | "seconds", value: string) => void;
+  onTimeChange: (
+    player: PlayerId,
+    field: "minutes" | "seconds",
+    value: string,
+  ) => void;
   onConfirmTime: (player: PlayerId) => void;
   onTimeout: () => void;
   pendingRemoval: PendingRemoval | null;
@@ -42,9 +46,23 @@ function formatTime(totalSeconds: number): string {
 }
 
 function PlayerPanel({
-  player, roster, pool, swapped, penalty, squad, morphs, wins, input, locked, displayName,
-  onTimeChange, onConfirmTime, pendingRemoval, removalSelection,
-  onToggleRemoval, onConfirmRemoval,
+  player,
+  roster,
+  pool,
+  swapped,
+  penalty,
+  squad,
+  morphs,
+  wins,
+  input,
+  locked,
+  displayName,
+  onTimeChange,
+  onConfirmTime,
+  pendingRemoval,
+  removalSelection,
+  onToggleRemoval,
+  onConfirmRemoval,
 }: {
   player: PlayerId;
   roster: Agent[];
@@ -69,20 +87,28 @@ function PlayerPanel({
   const border = isP1 ? "border-p1" : "border-p2";
   const background = isP1 ? "bg-p1" : "bg-p2";
   const isRemoving = pendingRemoval?.player === player;
-  const selectedAgents = squad.map(id => pool.find(a => a.id === id));
+  const selectedAgents = squad.map((id) => pool.find((a) => a.id === id));
   const removable = isRemoving
-    ? roster.filter(a => pendingRemoval.pool.includes(a.id))
+    ? roster.filter((a) => pendingRemoval.pool.includes(a.id))
     : [];
 
   return (
-    <section className={`flex flex-col min-w-0 border-t-4 ${border} bg-[#141420]`}>
+    <section
+      className={`flex flex-col min-w-0 border-t-4 ${border} bg-[#141420]`}
+    >
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[#303044]">
         <div className="min-w-0">
-          <div className={`font-pixel text-lg ${accent}`}>{displayName(player).toUpperCase()}</div>
-          <div className="text-xs text-text-muted mt-1">{roster.length} AGENTS REMAINING</div>
+          <div className={`font-pixel text-lg ${accent}`}>
+            {displayName(player).toUpperCase()}
+          </div>
+          <div className="text-xs text-text-muted mt-1">
+            {roster.length} AGENTS REMAINING
+          </div>
         </div>
         <div className="text-right">
-          <div className="font-pixel text-[10px] text-text-muted">ROUND WINS</div>
+          <div className="font-pixel text-[10px] text-text-muted">
+            ROUND WINS
+          </div>
           <div className={`font-pixel text-2xl ${accent}`}>{wins}</div>
         </div>
       </div>
@@ -90,7 +116,8 @@ function PlayerPanel({
       <div className="px-5 pt-5 pb-6">
         {swapped && (
           <div className="font-pixel text-xs text-event mb-3 text-center">
-            ARMORY SWAP · PLAYING {displayName(player === "p1" ? "p2" : "p1").toUpperCase()}’S SQUAD
+            ARMORY SWAP · PLAYING{" "}
+            {displayName(player === "p1" ? "p2" : "p1").toUpperCase()}’S SQUAD
           </div>
         )}
         {penalty > 0 && (
@@ -99,27 +126,50 @@ function PlayerPanel({
           </div>
         )}
         <div className="flex justify-between items-center mb-4">
-          <span className="font-pixel text-sm text-text-primary">ROUND SQUAD</span>
-          <span className={`font-pixel text-sm ${accent}`}>{squad.length} AGENT{squad.length === 1 ? "" : "S"}</span>
+          <span className="font-pixel text-sm text-text-primary">
+            ROUND SQUAD
+          </span>
+          <span className={`font-pixel text-sm ${accent}`}>
+            {squad.length} AGENT{squad.length === 1 ? "" : "S"}
+          </span>
         </div>
         <div className="grid grid-cols-3 gap-3 max-w-[600px] mx-auto w-full">
-          {Array.from({ length: Math.max(squad.length, 1) }, (_, index) => index).map(index => {
+          {Array.from(
+            { length: Math.max(squad.length, 1) },
+            (_, index) => index,
+          ).map((index) => {
             const agent = selectedAgents[index];
             const shown = agent ? displayForm(agent, morphs, pool) : null;
             return (
-              <div key={index} className={`relative min-w-0 aspect-[3/4] border-2 ${agent ? border : "border-[#353548]"} bg-[#1D1D2C] overflow-hidden`}>
+              <div
+                key={index}
+                className={`relative min-w-0 aspect-[3/4] border-2 ${agent ? border : "border-[#353548]"} bg-[#1D1D2C] overflow-hidden`}
+              >
                 {agent ? (
                   <>
-                    <img src={`/agents/agents_full/${shown!.agent.art ?? shown!.agent.id}_full.webp`} alt={shown!.agent.name} loading="eager" className="absolute inset-0 w-full h-full object-cover object-top" />
+                    <img
+                      src={`/agents/agents_full/${shown!.agent.art ?? shown!.agent.id}_full.webp`}
+                      alt={shown!.agent.name}
+                      loading="eager"
+                      className="absolute inset-0 w-full h-full object-cover object-top"
+                    />
                     {shown!.via && (
-                      <span className="absolute top-1 right-1 bg-event text-[#141420] font-pixel text-[10px] px-1">{shown!.via.toUpperCase()}</span>
+                      <span className="absolute top-1 right-1 bg-event text-[#141420] font-pixel text-[10px] px-1">
+                        {shown!.via.toUpperCase()}
+                      </span>
                     )}
-                    <div className={`absolute bottom-0 inset-x-0 ${background} px-1 py-2 text-center`}>
-                      <span className="font-mono font-bold text-[20px] text-white break-words">{shown!.agent.name}</span>
+                    <div
+                      className={`absolute bottom-0 inset-x-0 ${background} px-1 py-2 text-center`}
+                    >
+                      <span className="font-mono font-bold text-[20px] text-white break-words">
+                        {shown!.agent.name}
+                      </span>
                     </div>
                   </>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center font-pixel text-3xl text-[#45455C]">+</div>
+                  <div className="absolute inset-0 flex items-center justify-center font-pixel text-3xl text-[#45455C]">
+                    +
+                  </div>
                 )}
               </div>
             );
@@ -130,18 +180,28 @@ function PlayerPanel({
       {/* During removal, only the losing player's eligible squad members can be selected. */}
       {isRemoving ? (
         <div className="px-5 pb-5">
-          <div className="font-pixel text-sm text-text-primary mb-2">SELECT AGENTS TO REMOVE</div>
+          <div className="font-pixel text-sm text-text-primary mb-2">
+            SELECT AGENTS TO REMOVE
+          </div>
           <p className="text-sm text-text-muted mb-4">
-            Choose {pendingRemoval.count} of this round's agents ({removalSelection.length}/{pendingRemoval.count})
-            {((pendingRemoval.locked?.length ?? 0) > 0 || pendingRemoval.pool.every(isMorphItem)) &&
+            Choose {pendingRemoval.count} of this round's agents (
+            {removalSelection.length}/{pendingRemoval.count})
+            {((pendingRemoval.locked?.length ?? 0) > 0 ||
+              pendingRemoval.pool.every(isMorphItem)) &&
               " — Soul Stones and Invitations used this round are removed first"}
           </p>
           <div className="grid grid-cols-6 gap-3 w-fit mx-auto mb-5">
-            {removable.map(agent => (
+            {removable.map((agent) => (
               <AgentCard
                 key={agent.id}
                 agent={agent}
-                selection={removalSelection.includes(agent.id) ? (isP1 ? "selected-p1" : "selected-p2") : "none"}
+                selection={
+                  removalSelection.includes(agent.id)
+                    ? isP1
+                      ? "selected-p1"
+                      : "selected-p2"
+                    : "none"
+                }
                 onClick={() => onToggleRemoval(agent.id)}
                 size={128}
               />
@@ -157,7 +217,9 @@ function PlayerPanel({
         </div>
       ) : !pendingRemoval ? (
         <div className="px-5 pb-6">
-          <div className="font-pixel text-sm text-text-primary mb-4">SUBMIT TIME</div>
+          <div className="font-pixel text-sm text-text-primary mb-4">
+            SUBMIT TIME
+          </div>
 
           <div className="flex items-center justify-center gap-4">
             {/* TIME INPUTS */}
@@ -168,7 +230,9 @@ function PlayerPanel({
                 placeholder="MM"
                 disabled={locked}
                 value={input.minutes}
-                onChange={e => onTimeChange(player, "minutes", e.target.value)}
+                onChange={(e) =>
+                  onTimeChange(player, "minutes", e.target.value)
+                }
                 className="bg-unavailable border-b-2 border-current px-2 py-3 font-sand text-2xl text-text-primary outline-none w-20 text-center disabled:opacity-40"
               />
 
@@ -181,7 +245,9 @@ function PlayerPanel({
                 placeholder="SS"
                 disabled={locked}
                 value={input.seconds}
-                onChange={e => onTimeChange(player, "seconds", e.target.value)}
+                onChange={(e) =>
+                  onTimeChange(player, "seconds", e.target.value)
+                }
                 className="bg-unavailable border-b-2 border-current px-2 py-3 font-sand text-2xl text-text-primary outline-none w-20 text-center disabled:opacity-40"
               />
             </div>
@@ -195,29 +261,37 @@ function PlayerPanel({
       font-pixel text-sm font-bold text-white
       whitespace-nowrap
       ${background}
-      ${locked
-                  ? "opacity-20 cursor-not-allowed"
-                  : "hover:brightness-110"}
+      ${locked ? "opacity-20 cursor-not-allowed" : "hover:brightness-110"}
     `}
             >
               {locked ? "LOCKED IN" : "CONFIRM TIME"}
             </button>
           </div>
-
         </div>
       ) : (
-        <div className="px-5 pb-6 font-pixel text-xs text-text-muted text-center">AWAITING REMOVAL</div>
+        <div className="px-5 pb-6 font-pixel text-xs text-text-muted text-center">
+          AWAITING REMOVAL
+        </div>
       )}
 
       <div className="flex-1 px-5 pb-6">
         <div className="flex justify-between items-center border-b border-[#303044] pb-2 mb-4">
-          <span className="font-pixel text-sm text-text-primary">YOUR ROSTER</span>
-          <span className="text-xs text-text-muted">{roster.length} AGENTS</span>
+          <span className="font-pixel text-sm text-text-primary">
+            YOUR ROSTER
+          </span>
+          <span className="text-xs text-text-muted">
+            {roster.length} AGENTS
+          </span>
         </div>
         <div className="grid grid-cols-6 gap-3 w-fit mx-auto">
-          {roster.map(agent => (
-            <AgentCard key={agent.id} agent={agent} size={128}
-              unavailable={!squad.includes(agent.id)} selection={player} />
+          {roster.map((agent) => (
+            <AgentCard
+              key={agent.id}
+              agent={agent}
+              size={128}
+              unavailable={!squad.includes(agent.id)}
+              selection={player}
+            />
           ))}
         </div>
       </div>
@@ -226,10 +300,29 @@ function PlayerPanel({
 }
 
 export function ScoreSubmit({
-  pool, banned, round, totalRounds, swapped, bossName, roundWins, overtimeStreak, timePenalty, rosters, squads, morphs,
-  timeInputs, submitted, onTimeChange, onConfirmTime, onTimeout,
-  pendingRemoval, removalSelection, onToggleRemoval, onConfirmRemoval,
-  roundLog, displayName,
+  pool,
+  banned,
+  round,
+  totalRounds,
+  swapped,
+  bossName,
+  roundWins,
+  overtimeStreak,
+  timePenalty,
+  rosters,
+  squads,
+  morphs,
+  timeInputs,
+  submitted,
+  onTimeChange,
+  onConfirmTime,
+  onTimeout,
+  pendingRemoval,
+  removalSelection,
+  onToggleRemoval,
+  onConfirmRemoval,
+  roundLog,
+  displayName,
 }: ScoreSubmitProps) {
   // A squad can hold Soul Stones / Invitations and, under Armory Swap, the OTHER
   // player's agents, so lookups search both rosters as well as the pool.
@@ -244,7 +337,7 @@ export function ScoreSubmit({
       onTimeout();
       return;
     }
-    const id = setTimeout(() => setTimeLeft(t => t - 1), 1000);
+    const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearTimeout(id);
   }, [timeLeft, resolved, paused, onTimeout]);
 
@@ -252,7 +345,10 @@ export function ScoreSubmit({
   function handleConfirmTime(player: PlayerId) {
     onConfirmTime(player);
     const opponent: PlayerId = player === "p1" ? "p2" : "p1";
-    if (!submitted[opponent] && timeLeft > TIMER_CONFIG.scoreSuddenDeathSeconds) {
+    if (
+      !submitted[opponent] &&
+      timeLeft > TIMER_CONFIG.scoreSuddenDeathSeconds
+    ) {
       setTimeLeft(TIMER_CONFIG.scoreSuddenDeathSeconds);
     }
   }
@@ -265,10 +361,9 @@ export function ScoreSubmit({
             {roundLabel(round, totalRounds)}
           </span>
           <span
-            className={`font-pixel text-lg ${timeLeft <= 30 && !resolved
-              ? "text-p2"
-              : "text-text-primary"
-              }`}
+            className={`font-pixel text-lg ${
+              timeLeft <= 30 && !resolved ? "text-p2" : "text-text-primary"
+            }`}
           >
             {resolved ? "—:—" : formatTime(Math.max(timeLeft, 0))}
           </span>
@@ -281,9 +376,13 @@ export function ScoreSubmit({
         {round > totalRounds && (
           <span className="font-pixel text-xs text-text-muted text-center">
             FIRST TO {OVERTIME_STREAK_TO_WIN} WINS IN A ROW ·{" "}
-            <span className="text-p1">{displayName("p1")} {overtimeStreak.p1}</span>
+            <span className="text-p1">
+              {displayName("p1")} {overtimeStreak.p1}
+            </span>
             {" / "}
-            <span className="text-p2">{displayName("p2")} {overtimeStreak.p2}</span>
+            <span className="text-p2">
+              {displayName("p2")} {overtimeStreak.p2}
+            </span>
           </span>
         )}
         {pendingRemoval && (
@@ -293,23 +392,42 @@ export function ScoreSubmit({
         )}
       </header>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-        {(["p1", "p2"] as PlayerId[]).map(player => (
-          <PlayerPanel key={player} player={player} roster={rosters[player]} pool={squadLookup} swapped={swapped} penalty={timePenalty[player]} squad={squads[player]} morphs={morphs[player]}
-            wins={roundWins[player]} input={timeInputs[player]} locked={submitted[player]}
-            displayName={displayName} onTimeChange={onTimeChange}
-            onConfirmTime={handleConfirmTime} pendingRemoval={pendingRemoval}
-            removalSelection={removalSelection} onToggleRemoval={onToggleRemoval}
-            onConfirmRemoval={onConfirmRemoval} />
+        {(["p1", "p2"] as PlayerId[]).map((player) => (
+          <PlayerPanel
+            key={player}
+            player={player}
+            roster={rosters[player]}
+            pool={squadLookup}
+            swapped={swapped}
+            penalty={timePenalty[player]}
+            squad={squads[player]}
+            morphs={morphs[player]}
+            wins={roundWins[player]}
+            input={timeInputs[player]}
+            locked={submitted[player]}
+            displayName={displayName}
+            onTimeChange={onTimeChange}
+            onConfirmTime={handleConfirmTime}
+            pendingRemoval={pendingRemoval}
+            removalSelection={removalSelection}
+            onToggleRemoval={onToggleRemoval}
+            onConfirmRemoval={onConfirmRemoval}
+          />
         ))}
       </div>
 
       {roundLog.length > 0 && (
         <div className="bg-[#141420] p-5">
-          <div className="font-pixel text-sm text-text-primary mb-3">ROUND LOG</div>
+          <div className="font-pixel text-sm text-text-primary mb-3">
+            ROUND LOG
+          </div>
           {roundLog.map((r, i) => (
             <p key={i} className="text-xs font-sand text-text-muted mb-1">
-              Round {r.round}{r.boss ? ` (${r.boss})` : ""}: <span className="text-p1">{displayName("p1")}</span>{" "}
-              {formatTime(r.t1)} — {formatTime(r.t2)} <span className="text-p2">{displayName("p2")}</span>
+              Round {r.round}
+              {r.boss ? ` (${r.boss})` : ""}:{" "}
+              <span className="text-p1">{displayName("p1")}</span>{" "}
+              {formatTime(r.t1)} — {formatTime(r.t2)}{" "}
+              <span className="text-p2">{displayName("p2")}</span>
               {r.outcome === "double-timeout"
                 ? " · both lost (no submission)"
                 : r.winner
@@ -321,17 +439,23 @@ export function ScoreSubmit({
       )}
 
       <div className="w-full">
-        <AgentPool agents={pool} banned={banned} showBanOverlay={false} cardSize={56}
-          showHeaders={false} flat={true}
-          selection={a => {
-            const inP1 = rosters.p1.some(x => x.id === a.id);
-            const inP2 = rosters.p2.some(x => x.id === a.id);
+        <AgentPool
+          agents={pool}
+          banned={banned}
+          showBanOverlay={false}
+          cardSize={56}
+          showHeaders={false}
+          flat={true}
+          selection={(a) => {
+            const inP1 = rosters.p1.some((x) => x.id === a.id);
+            const inP2 = rosters.p2.some((x) => x.id === a.id);
             if (inP1 && inP2) return "mirror";
             if (inP1) return "p1";
             if (inP2) return "p2";
             return "none";
           }}
-          onClick={() => { }} />
+          onClick={() => {}}
+        />
       </div>
     </div>
   );

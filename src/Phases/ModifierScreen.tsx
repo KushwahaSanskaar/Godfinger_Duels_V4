@@ -13,7 +13,9 @@ export function ModifierScreen({
   if (modifier.secret && !revealed) {
     return (
       <div className="w-full flex flex-col items-center gap-6 py-3">
-        <span className="font-pixel text-sm text-event tracking-widest">◆ UNIVERSAL MODIFIER ◆</span>
+        <span className="font-pixel text-sm text-event tracking-widest">
+          ◆ UNIVERSAL MODIFIER ◆
+        </span>
         <div className="w-full max-w-[900px] border-4 border-event bg-[#29251C] p-8 flex flex-col items-center gap-4">
           <h3 className="font-pixel text-6xl text-event">???</h3>
         </div>
@@ -30,7 +32,9 @@ export function ModifierScreen({
   }
   return (
     <div className="w-full flex flex-col items-center gap-6 py-3">
-      <span className="font-pixel text-sm text-event tracking-widest">◆ UNIVERSAL MODIFIER ◆</span>
+      <span className="font-pixel text-sm text-event tracking-widest">
+        ◆ UNIVERSAL MODIFIER ◆
+      </span>
       <div className="w-full max-w-[900px] border-4 border-event bg-[#29251C] p-8 flex flex-col gap-4">
         <h3 className="font-pixel text-3xl text-event">
           {modifier.title.toUpperCase()}
@@ -38,8 +42,12 @@ export function ModifierScreen({
             <span className="ml-3 text-lg text-accent">({modifier.flair})</span>
           )}
         </h3>
-        <p className="font-lexend text-base text-text-primary">{modifier.desc}</p>
-        <p className="font-pixel text-xs text-text-muted">APPLIES TO BOTH PLAYERS · ONE BATTLE ONLY</p>
+        <p className="font-lexend text-base text-text-primary">
+          {modifier.desc}
+        </p>
+        <p className="font-pixel text-xs text-text-muted">
+          APPLIES TO BOTH PLAYERS · ONE BATTLE ONLY
+        </p>
       </div>
       <div className="w-full max-w-[900px]">
         <button

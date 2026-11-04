@@ -80,9 +80,15 @@ function ControlPanel({
     <div className="mx-5 mb-5 border-2 border-event bg-[#29251C] p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between gap-3">
         <span className="font-pixel text-sm text-event">
-          CHOOSE <span className={targetAccent}>{displayName(target).toUpperCase()}</span>’S LAST AGENT
+          CHOOSE{" "}
+          <span className={targetAccent}>
+            {displayName(target).toUpperCase()}
+          </span>
+          ’S LAST AGENT
         </span>
-        <span className={`font-pixel text-lg ${timeLeft <= 10 ? "text-p2" : "text-text-primary"}`}>
+        <span
+          className={`font-pixel text-lg ${timeLeft <= 10 ? "text-p2" : "text-text-primary"}`}
+        >
           0:{timeLeft.toString().padStart(2, "0")}
         </span>
       </div>
@@ -167,12 +173,14 @@ function SquadColumn({
     !confirmed,
     () => onTimeout(player),
   );
-  const selectedAgents = squad.map(
-    (id) => roster.find((agent) => agent.id === id)
+  const selectedAgents = squad.map((id) =>
+    roster.find((agent) => agent.id === id),
   );
   // which Soul Stone / Invitation the popup is open for
   const [morphFor, setMorphFor] = useState<string | null>(null);
-  const morphItem = morphFor ? roster.find((a) => a.id === morphFor) : undefined;
+  const morphItem = morphFor
+    ? roster.find((a) => a.id === morphFor)
+    : undefined;
   const needsForm = squad.some((id) => isMorphItem(id) && !morphChoices[id]);
   const canConfirm = !confirmed && squad.length === mainSize && !needsForm;
 
@@ -209,14 +217,12 @@ function SquadColumn({
                 confirmed
                   ? accent
                   : timeLeft <= 10
-                  ? "text-p2"
-                  : "text-text-primary"
+                    ? "text-p2"
+                    : "text-text-primary"
               }
             `}
           >
-            {confirmed
-              ? "LOCKED"
-              : `0:${timeLeft.toString().padStart(2, "0")}`}
+            {confirmed ? "LOCKED" : `0:${timeLeft.toString().padStart(2, "0")}`}
           </span>
         </div>
       </div>
@@ -243,16 +249,16 @@ function SquadColumn({
             return (
               <div
                 key={index}
-                onClick={!confirmed && isItem ? () => setMorphFor(agent!.id) : undefined}
+                onClick={
+                  !confirmed && isItem
+                    ? () => setMorphFor(agent!.id)
+                    : undefined
+                }
                 className={`
                   relative min-w-0 aspect-[3/4]
                   ${!confirmed && isItem ? "cursor-pointer" : ""}
                   border-2
-                  ${
-                    agent
-                      ? border
-                      : "border-[#353548]"
-                  }
+                  ${agent ? border : "border-[#353548]"}
                   bg-[#1D1D2C]
                   overflow-hidden
                 `}
@@ -298,7 +304,9 @@ function SquadColumn({
                     </span>
 
                     <span className="font-pixel text-[10px] text-[#66667D] text-center">
-                      {hasControlSlot && index === 2 ? "OPPONENT PICKS" : `SLOT ${index + 1}`}
+                      {hasControlSlot && index === 2
+                        ? "OPPONENT PICKS"
+                        : `SLOT ${index + 1}`}
                     </span>
                   </div>
                 )}
@@ -344,7 +352,10 @@ function SquadColumn({
                     : () => {
                         // Soul Stone / Invitation: the popup decides what it becomes. Taking
                         // one out of the squad again is a normal click.
-                        if (isMorphItem(agent.id) && (!inSquad || agent.id === forcedId)) {
+                        if (
+                          isMorphItem(agent.id) &&
+                          (!inSquad || agent.id === forcedId)
+                        ) {
                           setMorphFor(agent.id);
                         } else {
                           onToggleAgent(player, agent);
@@ -375,8 +386,8 @@ function SquadColumn({
           {confirmed
             ? "LOCKED IN"
             : needsForm && squad.length === mainSize
-            ? "CHOOSE A FORM FIRST"
-            : "CONFIRM SQUAD"}
+              ? "CHOOSE A FORM FIRST"
+              : "CONFIRM SQUAD"}
         </button>
       </div>
 
@@ -430,14 +441,14 @@ export function SquadSelect({
     mod === "tunnel-vision"
       ? "TUNNEL VISION — 1 AGENT IS FORCED ON EACH SQUAD · CHOOSE THE OTHER 2"
       : mod === "puppeteer"
-      ? "PUPPETEER — LOCK IN 2 AGENTS, THEN CHOOSE 1 FOR YOUR OPPONENT"
-      : mod === "armory-swap"
-      ? "ARMORY SWAP — PICK 3, THEN THE SQUADS SWAP FOR THE BATTLE"
-      : mc
-      ? `MIND CONTROL — ${displayName(mc).toUpperCase()} LOCKS 2 AGENTS, THEN ${displayName(
-          mc === "p1" ? "p2" : "p1",
-        ).toUpperCase()} CHOOSES THEIR 3RD`
-      : null;
+        ? "PUPPETEER — LOCK IN 2 AGENTS, THEN CHOOSE 1 FOR YOUR OPPONENT"
+        : mod === "armory-swap"
+          ? "ARMORY SWAP — PICK 3, THEN THE SQUADS SWAP FOR THE BATTLE"
+          : mc
+            ? `MIND CONTROL — ${displayName(mc).toUpperCase()} LOCKS 2 AGENTS, THEN ${displayName(
+                mc === "p1" ? "p2" : "p1",
+              ).toUpperCase()} CHOOSES THEIR 3RD`
+            : null;
   const panelFor = (p: PlayerId) => {
     const target: PlayerId = p === "p1" ? "p2" : "p1";
     if (!squadPlan.controlOpen[target]) return undefined;
@@ -468,7 +479,11 @@ export function SquadSelect({
         <span className="font-pixel text-sm text-text-muted tracking-widest">
           SQUAD SELECTION
         </span>
-        {hint && <span className="font-pixel text-xs text-event text-center">{hint}</span>}
+        {hint && (
+          <span className="font-pixel text-xs text-event text-center">
+            {hint}
+          </span>
+        )}
       </div>
 
       {/* TWO PLAYER PANELS */}

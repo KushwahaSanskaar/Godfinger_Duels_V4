@@ -13,7 +13,13 @@ interface BossRollProps {
 
 type RevealState = "ready" | "rolling" | "revealed";
 
-export function BossRoll({ currentBoss, round, totalRounds, onRoll, onContinue }: BossRollProps) {
+export function BossRoll({
+  currentBoss,
+  round,
+  totalRounds,
+  onRoll,
+  onContinue,
+}: BossRollProps) {
   const [revealState, setRevealState] = useState<RevealState>("ready");
   const [displayedName, setDisplayedName] = useState("???");
   const [imageFailed, setImageFailed] = useState(false);
@@ -29,7 +35,9 @@ export function BossRoll({ currentBoss, round, totalRounds, onRoll, onContinue }
     setRevealState("rolling");
     setImageFailed(false);
 
-    const delays = [70, 75, 80, 90, 100, 115, 130, 150, 175, 205, 240, 285, 335];
+    const delays = [
+      70, 75, 80, 90, 100, 115, 130, 150, 175, 205, 240, 285, 335,
+    ];
     let index = 0;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
@@ -58,15 +66,25 @@ export function BossRoll({ currentBoss, round, totalRounds, onRoll, onContinue }
   return (
     <div className="w-full flex flex-col gap-5 py-3">
       <div className="flex flex-col items-center gap-1 text-center">
-        <span className="font-pixel text-lg text-text-primary">{roundLabel(round, totalRounds)}</span>
-        <span className="font-pixel text-sm text-text-muted tracking-widest">BOSS ENCOUNTER</span>
+        <span className="font-pixel text-lg text-text-primary">
+          {roundLabel(round, totalRounds)}
+        </span>
+        <span className="font-pixel text-sm text-text-muted tracking-widest">
+          BOSS ENCOUNTER
+        </span>
       </div>
 
       <section className="w-full bg-[#141420] border-t-4 border-[#F5C518] p-5 md:p-8">
         <div className="flex items-center justify-between gap-3 border-b-2 border-[#3B3449] pb-4">
-          <span className="font-pixel text-xs md:text-sm text-[#F5C518]">◆ ENCOUNTER ROULETTE</span>
+          <span className="font-pixel text-xs md:text-sm text-[#F5C518]">
+            ◆ ENCOUNTER ROULETTE
+          </span>
           <span className="font-pixel text-[10px] md:text-xs text-[#B8A8C8]">
-            {revealState === "ready" ? "AWAITING ROLL" : revealed ? "BOSS CONFIRMED" : "ROLLING..."}
+            {revealState === "ready"
+              ? "AWAITING ROLL"
+              : revealed
+                ? "BOSS CONFIRMED"
+                : "ROLLING..."}
           </span>
         </div>
 
@@ -95,18 +113,29 @@ export function BossRoll({ currentBoss, round, totalRounds, onRoll, onContinue }
           {/* Roulette and controls */}
           <div className="min-w-0 flex flex-col justify-center gap-5">
             <div className="text-center lg:text-left">
-              <span className="font-pixel text-xs text-[#F5C518] tracking-widest">◆ WARNING ◆</span>
-              <h1 className="mt-3 font-pixel text-3xl md:text-5xl text-white leading-tight"
-                  style={{ textShadow: "4px 4px 0 #785C19" }}>
+              <span className="font-pixel text-xs text-[#F5C518] tracking-widest">
+                ◆ WARNING ◆
+              </span>
+              <h1
+                className="mt-3 font-pixel text-3xl md:text-5xl text-white leading-tight"
+                style={{ textShadow: "4px 4px 0 #785C19" }}
+              >
                 BOSS ENCOUNTER
               </h1>
             </div>
 
             <div className="border-2 border-[#F5C518] bg-[#20192C] px-4 py-8 text-center min-h-[142px] flex flex-col items-center justify-center gap-3">
               <span className="font-pixel text-[10px] text-[#D8B54D] tracking-widest">
-                {revealed ? "ENCOUNTER REVEALED" : revealState === "rolling" ? "SELECTING TARGET..." : "UNKNOWN ENCOUNTER"}
+                {revealed
+                  ? "ENCOUNTER REVEALED"
+                  : revealState === "rolling"
+                    ? "SELECTING TARGET..."
+                    : "UNKNOWN ENCOUNTER"}
               </span>
-              <span key={displayedName} className="font-mono font-bold text-2xl md:text-4xl text-white break-words leading-tight">
+              <span
+                key={displayedName}
+                className="font-mono font-bold text-2xl md:text-4xl text-white break-words leading-tight"
+              >
                 {displayedName.toUpperCase()}
               </span>
             </div>
@@ -126,7 +155,10 @@ export function BossRoll({ currentBoss, round, totalRounds, onRoll, onContinue }
                 BEGIN SQUAD SELECTION →
               </button>
             ) : (
-              <div className="w-full border-2 border-[#65502A] bg-[#2C2431] text-[#D8BA73] text-center font-pixel text-sm md:text-lg py-5 px-4" aria-live="off">
+              <div
+                className="w-full border-2 border-[#65502A] bg-[#2C2431] text-[#D8BA73] text-center font-pixel text-sm md:text-lg py-5 px-4"
+                aria-live="off"
+              >
                 ROLLING...
               </div>
             )}

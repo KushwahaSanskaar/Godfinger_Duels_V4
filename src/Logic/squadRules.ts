@@ -59,7 +59,10 @@ export function isSquadPickAllowed(
     // restricted agent can't be picked until this one is, so counting it would
     // leave both stuck (a deadlock).
     const others = rosterIds.filter(
-      (id) => !lockOne.includes(id) && !squad.includes(id) && (tiers[id] ?? 0) <= tier,
+      (id) =>
+        !lockOne.includes(id) &&
+        !squad.includes(id) &&
+        (tiers[id] ?? 0) <= tier,
     ).length;
     if (others >= needed) return false; // not forced
   }
@@ -80,7 +83,10 @@ export function sanitizeSquad(
   const out: string[] = fixed.filter((id) => rosterIds.includes(id));
   squad.forEach((id) => {
     if (fixed.includes(id)) return;
-    if (out.length < SQUAD_SIZE && isSquadPickAllowed(rosterIds, tiers, out, id, lockOne))
+    if (
+      out.length < SQUAD_SIZE &&
+      isSquadPickAllowed(rosterIds, tiers, out, id, lockOne)
+    )
       out.push(id);
   });
   return out;
@@ -97,10 +103,15 @@ export function autoFillSquad(
   size: number = SQUAD_SIZE,
   fixed: string[] = [],
 ): string[] {
-  const squad = sanitizeSquad(rosterIds, tiers, current, lockOne, fixed).slice(0, size);
+  const squad = sanitizeSquad(rosterIds, tiers, current, lockOne, fixed).slice(
+    0,
+    size,
+  );
   while (squad.length < size) {
     const options = rosterIds.filter(
-      (id) => !squad.includes(id) && isSquadPickAllowed(rosterIds, tiers, squad, id, lockOne),
+      (id) =>
+        !squad.includes(id) &&
+        isSquadPickAllowed(rosterIds, tiers, squad, id, lockOne),
     );
     if (options.length === 0) break;
     squad.push(options[Math.floor(rng() * options.length)]);
@@ -122,7 +133,14 @@ export function nextCooldowns(args: {
   cooldownRounds: number;
   immune?: string[];
 }): Cooldowns {
-  const { rosterIds, cooldowns, squad, eliminated, cooldownRounds, immune = [] } = args;
+  const {
+    rosterIds,
+    cooldowns,
+    squad,
+    eliminated,
+    cooldownRounds,
+    immune = [],
+  } = args;
   const survivors = rosterIds.filter((id) => !eliminated.includes(id));
   if (survivors.length <= SQUAD_SIZE) return {};
 
@@ -131,7 +149,8 @@ export function nextCooldowns(args: {
     if (survivors.includes(id) && remaining - 1 > 0) next[id] = remaining - 1;
   });
   squad.forEach((id) => {
-    if (survivors.includes(id) && !immune.includes(id)) next[id] = cooldownRounds;
+    if (survivors.includes(id) && !immune.includes(id))
+      next[id] = cooldownRounds;
   });
   return next;
 }

@@ -35,21 +35,19 @@
 
   padding-bottom: 20px;
 
-  mask-image:
-    linear-gradient(
-      to bottom,
-      black 0%,
-      black calc(100% - 40px),
-      transparent 100%
-    );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 40px),
+    transparent 100%
+  );
 
-  -webkit-mask-image:
-    linear-gradient(
-      to bottom,
-      black 0%,
-      black calc(100% - 40px),
-      transparent 100%
-    );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black calc(100% - 40px),
+    transparent 100%
+  );
 }
 
 @font-face {
@@ -69,13 +67,37 @@
 }
 
 @keyframes glitch {
-  0%   { transform: translateY(-5px) skewX(0deg); text-shadow: 3px 0 0 #972934, -3px 0 0 #1748A1; }
-  10%  { transform: translateY(-8px) skewX(-4deg) translateX(-3px); }
-  20%  { transform: translateY(-1px) skewX(4deg) translateX(3px); text-shadow: -4px 0 0 #972934, 4px 0 0 #1748A1; }
-  30%  { transform: translateY(-6px) skewX(0deg) translateX(0px); opacity: 0; }
-  40%  { transform: translateY(-5px) skewX(-6deg) translateX(4px); opacity: 1; }
-  50%  { transform: translateY(-3px) skewX(0deg); opacity: 0; }
-  100% { transform: translateY(-5px) skewX(0deg); opacity: 1; }
+  0% {
+    transform: translateY(-5px) skewX(0deg);
+    text-shadow:
+      3px 0 0 #972934,
+      -3px 0 0 #1748a1;
+  }
+  10% {
+    transform: translateY(-8px) skewX(-4deg) translateX(-3px);
+  }
+  20% {
+    transform: translateY(-1px) skewX(4deg) translateX(3px);
+    text-shadow:
+      -4px 0 0 #972934,
+      4px 0 0 #1748a1;
+  }
+  30% {
+    transform: translateY(-6px) skewX(0deg) translateX(0px);
+    opacity: 0;
+  }
+  40% {
+    transform: translateY(-5px) skewX(-6deg) translateX(4px);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-3px) skewX(0deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(-5px) skewX(0deg);
+    opacity: 1;
+  }
 }
 
 .glitch {
@@ -83,45 +105,92 @@
 }
 
 @keyframes wipe-overlay-p1 {
-  0%   { transform: translateX(-100%); }
-  10%  { transform: translateX(0%); }
-  90%  { transform: translateX(0%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  10% {
+    transform: translateX(0%);
+  }
+  90% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 @keyframes wipe-overlay-p2 {
-  0%   { transform: translateX(100%); }
-  10%  { transform: translateX(0%); }
-  90%  { transform: translateX(0%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(100%);
+  }
+  10% {
+    transform: translateX(0%);
+  }
+  90% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
-.wipe-overlay-p1 { animation: wipe-overlay-p1 800ms steps(12) forwards; }
-.wipe-overlay-p2 { animation: wipe-overlay-p2 800ms steps(12) forwards; }
+.wipe-overlay-p1 {
+  animation: wipe-overlay-p1 800ms steps(12) forwards;
+}
+.wipe-overlay-p2 {
+  animation: wipe-overlay-p2 800ms steps(12) forwards;
+}
 
 @keyframes dither-wipe-in {
-    0%   { transform: translateX(-110%); }
-    15%  { transform: translateX(0%); }
-    80%  { transform: translateX(0%); }
-    100% { transform: translateX(110%); }
+  0% {
+    transform: translateX(-110%);
+  }
+  15% {
+    transform: translateX(0%);
+  }
+  80% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(110%);
+  }
 }
 
 @keyframes dither-wipe-out {
-    0%   { transform: translateX(110%); }
-    15%  { transform: translateX(0%); }
-    80%  { transform: translateX(0%); }
-    100% { transform: translateX(-110%); }
+  0% {
+    transform: translateX(110%);
+  }
+  15% {
+    transform: translateX(0%);
+  }
+  80% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-110%);
+  }
 }
 
-.dither-wipe-in  { animation: dither-wipe-in  1100ms linear forwards; }
-.dither-wipe-out { animation: dither-wipe-out 1100ms linear forwards; }
-
+.dither-wipe-in {
+  animation: dither-wipe-in 1100ms linear forwards;
+}
+.dither-wipe-out {
+  animation: dither-wipe-out 1100ms linear forwards;
+}
 
 /* Offset and bounce amplitude follow the title's font size. */
 @keyframes arcade-text-bounce {
-  0%, 100% { transform: translateY(-0.065em); }
-  25%, 75% { transform: translateY(-0.115em); }
-  50% { transform: translateY(-0.165em); }
+  0%,
+  100% {
+    transform: translateY(-0.065em);
+  }
+  25%,
+  75% {
+    transform: translateY(-0.115em);
+  }
+  50% {
+    transform: translateY(-0.165em);
+  }
 }
 
 .arcade-text-bounce {
@@ -135,70 +204,168 @@
 }
 
 /* Responsive ban/draft layout. Scoped so other phases are unaffected. */
-.draft-shell { padding: clamp(8px, 1.25vw, 36px); }
+.draft-shell {
+  padding: clamp(8px, 1.25vw, 36px);
+}
 .draft-layout {
   display: grid;
-  grid-template-columns: clamp(155px, 14vw, 380px) minmax(0, 1fr) clamp(155px, 14vw, 380px);
+  grid-template-columns: clamp(155px, 14vw, 380px) minmax(0, 1fr) clamp(
+      155px,
+      14vw,
+      380px
+    );
   gap: clamp(8px, 1vw, 24px);
   align-items: start;
 }
-.draft-roster { min-width: 0; }
-.draft-roster-p1 { grid-column: 1; }
-.draft-main { min-width: 0; grid-column: 2; grid-row: 1; }
-.draft-roster-p2 { grid-column: 3; }
-.draft-phase-header { height: clamp(68px, 9vh, 180px); }
-.draft-phase-title { font-size: clamp(30px, min(6vw, 7vh), 118px); }
-.responsive-agent-pool { width: 100%; min-width: 0; }
-.draft-layout .card { min-width: 0; }
-.draft-roster .relative.h-\[70px\] { height: clamp(40px, 6.5vh, 105px); }
-.draft-roster .w-24 { width: clamp(46px, 5.2vw, 140px); }
+.draft-roster {
+  min-width: 0;
+}
+.draft-roster-p1 {
+  grid-column: 1;
+}
+.draft-main {
+  min-width: 0;
+  grid-column: 2;
+  grid-row: 1;
+}
+.draft-roster-p2 {
+  grid-column: 3;
+}
+.draft-phase-header {
+  height: clamp(68px, 9vh, 180px);
+}
+.draft-phase-title {
+  font-size: clamp(30px, min(6vw, 7vh), 118px);
+}
+.responsive-agent-pool {
+  width: 100%;
+  min-width: 0;
+}
+.draft-layout .card {
+  min-width: 0;
+}
+.draft-roster .relative.h-\[70px\] {
+  height: clamp(40px, 6.5vh, 105px);
+}
+.draft-roster .w-24 {
+  width: clamp(46px, 5.2vw, 140px);
+}
 @media (max-width: 1250px) {
-  .draft-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .draft-main { grid-column: 1 / -1; grid-row: 1; }
-  .draft-roster-p1 { grid-column: 1; grid-row: 2; }
-  .draft-roster-p2 { grid-column: 2; grid-row: 2; }
-  .draft-roster .w-24 { width: clamp(52px, 11vw, 110px); }
+  .draft-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .draft-main {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .draft-roster-p1 {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .draft-roster-p2 {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .draft-roster .w-24 {
+    width: clamp(52px, 11vw, 110px);
+  }
 }
 @media (max-width: 650px) {
-  .draft-shell { padding: 6px; }
-  .draft-phase-header { height: 72px; }
-  .draft-phase-title { font-size: clamp(25px, 7vw, 45px); }
-  #phase-header-status { padding-left: 5px; padding-right: 5px; }
-  .draft-layout { gap: 6px; }
-  .draft-roster .w-24 { width: 44px; }
-  .draft-roster .text-sm, .draft-roster .text-lg { font-size: 10px; }
+  .draft-shell {
+    padding: 6px;
+  }
+  .draft-phase-header {
+    height: 72px;
+  }
+  .draft-phase-title {
+    font-size: clamp(25px, 7vw, 45px);
+  }
+  #phase-header-status {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  .draft-layout {
+    gap: 6px;
+  }
+  .draft-roster .w-24 {
+    width: 44px;
+  }
+  .draft-roster .text-sm,
+  .draft-roster .text-lg {
+    font-size: 10px;
+  }
 }
 
 /* Fluid typography for the ban / draft / agent-pool screens. */
 .draft-shell {
-  --draft-text-xs: clamp(10px, .65vw + .2vh, 17px);
-  --draft-text-sm: clamp(11px, .8vw + .2vh, 21px);
-  --draft-text-md: clamp(12px, 1vw + .25vh, 25px);
-  --draft-text-lg: clamp(13px, 1.15vw + .3vh, 30px);
-  --draft-text-timer: clamp(17px, 1.6vw + .45vh, 43px);
+  --draft-text-xs: clamp(10px, 0.65vw + 0.2vh, 17px);
+  --draft-text-sm: clamp(11px, 0.8vw + 0.2vh, 21px);
+  --draft-text-md: clamp(12px, 1vw + 0.25vh, 25px);
+  --draft-text-lg: clamp(13px, 1.15vw + 0.3vh, 30px);
+  --draft-text-timer: clamp(17px, 1.6vw + 0.45vh, 43px);
 }
 /* Header information is portaled outside the central content area. */
-.draft-shell #phase-header-status { gap: clamp(6px, 1vw, 24px); padding-inline: clamp(6px, 1.5vw, 48px); }
-.draft-shell #phase-header-status .font-pixel.text-\[10px\] { font-size: var(--draft-text-xs); }
-.draft-shell #phase-header-status .font-semibold.text-sm { font-size: var(--draft-text-sm); }
-.draft-shell #phase-header-status .font-pixel.text-2xl { font-size: var(--draft-text-timer); white-space: nowrap; }
+.draft-shell #phase-header-status {
+  gap: clamp(6px, 1vw, 24px);
+  padding-inline: clamp(6px, 1.5vw, 48px);
+}
+.draft-shell #phase-header-status .font-pixel.text-\[10px\] {
+  font-size: var(--draft-text-xs);
+}
+.draft-shell #phase-header-status .font-semibold.text-sm {
+  font-size: var(--draft-text-sm);
+}
+.draft-shell #phase-header-status .font-pixel.text-2xl {
+  font-size: var(--draft-text-timer);
+  white-space: nowrap;
+}
 /* Group labels must remain centered without pushing the grid down. */
-.draft-shell .agent-pool-group-title { font-size: var(--draft-text-sm); line-height: 1.2; }
-.draft-shell .agent-pool-group-heading { height: clamp(20px, 2.2vh, 38px); margin-bottom: clamp(3px, .5vh, 10px); }
+.draft-shell .agent-pool-group-title {
+  font-size: var(--draft-text-sm);
+  line-height: 1.2;
+}
+.draft-shell .agent-pool-group-heading {
+  height: clamp(20px, 2.2vh, 38px);
+  margin-bottom: clamp(3px, 0.5vh, 10px);
+}
 /* Roster labels, names, slot numbers and specialties. */
-.draft-shell .draft-roster .h-8 { height: clamp(30px, 3.2vh, 56px); }
-.draft-shell .draft-roster .font-pixel.text-sm { font-size: var(--draft-text-sm); }
-.draft-shell .draft-roster .text-md { font-size: var(--draft-text-sm); }
-.draft-shell .draft-roster .text-lg { font-size: var(--draft-text-md); }
-.draft-shell .draft-roster .text-sm { font-size: var(--draft-text-sm); }
-.draft-shell .draft-roster .text-xs { font-size: var(--draft-text-xs); }
-.draft-shell .draft-roster .text-7xl { font-size: clamp(24px, 3.4vw, 82px); }
-.draft-shell .draft-roster p { overflow-wrap: anywhere; }
+.draft-shell .draft-roster .h-8 {
+  height: clamp(30px, 3.2vh, 56px);
+}
+.draft-shell .draft-roster .font-pixel.text-sm {
+  font-size: var(--draft-text-sm);
+}
+.draft-shell .draft-roster .text-md {
+  font-size: var(--draft-text-sm);
+}
+.draft-shell .draft-roster .text-lg {
+  font-size: var(--draft-text-md);
+}
+.draft-shell .draft-roster .text-sm {
+  font-size: var(--draft-text-sm);
+}
+.draft-shell .draft-roster .text-xs {
+  font-size: var(--draft-text-xs);
+}
+.draft-shell .draft-roster .text-7xl {
+  font-size: clamp(24px, 3.4vw, 82px);
+}
+.draft-shell .draft-roster p {
+  overflow-wrap: anywhere;
+}
 /* Draft modifiers, pick restrictions, and Gatekeeper notice. */
-.draft-shell .draft-main > div > .border-p2 .font-pixel.text-lg { font-size: var(--draft-text-lg); }
-.draft-shell .draft-main > div > .border-p2 .font-pixel.text-xl { font-size: var(--draft-text-lg); }
-.draft-shell .draft-main > div > .border-p2 .font-mono { font-size: var(--draft-text-sm); }
-.draft-shell .draft-main .font-sand.text-xs { font-size: var(--draft-text-sm); }
+.draft-shell .draft-main > div > .border-p2 .font-pixel.text-lg {
+  font-size: var(--draft-text-lg);
+}
+.draft-shell .draft-main > div > .border-p2 .font-pixel.text-xl {
+  font-size: var(--draft-text-lg);
+}
+.draft-shell .draft-main > div > .border-p2 .font-mono {
+  font-size: var(--draft-text-sm);
+}
+.draft-shell .draft-main .font-sand.text-xs {
+  font-size: var(--draft-text-sm);
+}
 @media (max-width: 650px) {
   .draft-shell {
     --draft-text-xs: 9px;
@@ -207,19 +374,50 @@
     --draft-text-lg: 12px;
     --draft-text-timer: 17px;
   }
-  .draft-shell .draft-roster .text-lg { font-size: var(--draft-text-md); }
-  .draft-shell .draft-roster .text-sm { font-size: var(--draft-text-sm); }
-  .draft-shell .draft-roster .text-xs { font-size: var(--draft-text-xs); }
-  .draft-shell .draft-main > div > .border-p2 { padding: 10px; }
+  .draft-shell .draft-roster .text-lg {
+    font-size: var(--draft-text-md);
+  }
+  .draft-shell .draft-roster .text-sm {
+    font-size: var(--draft-text-sm);
+  }
+  .draft-shell .draft-roster .text-xs {
+    font-size: var(--draft-text-xs);
+  }
+  .draft-shell .draft-main > div > .border-p2 {
+    padding: 10px;
+  }
 }
 
 /* Large monitors: use the available space instead of capping at 1080p-like sizes. */
 @media (min-width: 2560px) and (min-height: 1300px) {
-  .draft-shell { padding: clamp(30px, 1.4vw, 70px); --draft-text-xs: clamp(17px, .65vw, 26px); --draft-text-sm: clamp(20px, .8vw, 32px); --draft-text-md: clamp(24px, 1vw, 40px); --draft-text-lg: clamp(28px, 1.2vw, 48px); --draft-text-timer: clamp(32px, 1.7vw, 68px); }
-  .draft-layout { grid-template-columns: minmax(300px, 12vw) minmax(0, 1fr) minmax(300px, 12vw); gap: clamp(24px, 1.2vw, 50px); }
-  .draft-phase-header { height: clamp(150px, 10vh, 260px); }
-  .draft-phase-title { font-size: clamp(100px, 4.5vw, 185px); }
-  .draft-roster .relative.h-\[70px\] { height: clamp(100px, 7vh, 165px); }
-  .draft-roster .w-24 { width: clamp(125px, 5vw, 205px); }
-  .draft-shell .agent-pool-group-heading { height: clamp(38px, 2.8vh, 65px); }
+  .draft-shell {
+    padding: clamp(30px, 1.4vw, 70px);
+    --draft-text-xs: clamp(17px, 0.65vw, 26px);
+    --draft-text-sm: clamp(20px, 0.8vw, 32px);
+    --draft-text-md: clamp(24px, 1vw, 40px);
+    --draft-text-lg: clamp(28px, 1.2vw, 48px);
+    --draft-text-timer: clamp(32px, 1.7vw, 68px);
+  }
+  .draft-layout {
+    grid-template-columns: minmax(300px, 12vw) minmax(0, 1fr) minmax(
+        300px,
+        12vw
+      );
+    gap: clamp(24px, 1.2vw, 50px);
+  }
+  .draft-phase-header {
+    height: clamp(150px, 10vh, 260px);
+  }
+  .draft-phase-title {
+    font-size: clamp(100px, 4.5vw, 185px);
+  }
+  .draft-roster .relative.h-\[70px\] {
+    height: clamp(100px, 7vh, 165px);
+  }
+  .draft-roster .w-24 {
+    width: clamp(125px, 5vw, 205px);
+  }
+  .draft-shell .agent-pool-group-heading {
+    height: clamp(38px, 2.8vh, 65px);
+  }
 }
