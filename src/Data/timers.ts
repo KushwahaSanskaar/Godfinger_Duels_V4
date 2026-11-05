@@ -1,6 +1,6 @@
 export const TIMER_CONFIG = {
   banSeconds: 30, // per ban, host-controlled clock
-  draftSeconds: 30, // per pick, host-controlled clock
+  draftSeconds: 45, // per pick, host-controlled clock
   squadSeconds: 60, // per player, to select their 3-agent squad
   scoreTotalSeconds: 8 * 60, // total time to submit a score
   scoreSuddenDeathSeconds: 2 * 60, // cap applied to the OTHER player once one player locks in

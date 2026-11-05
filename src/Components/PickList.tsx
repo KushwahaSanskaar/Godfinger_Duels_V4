@@ -1,15 +1,15 @@
-import type { Agent, DraftQueueItem, PlayerId } from "../types";
+import type { Agent, Mode, PlayerId } from "../types";
+import { MODES } from "../Data/modes";
 import { useEffect, useRef, useState } from "react";
 
-function getGlobalPickNumbers(
-  draftQueue: DraftQueueItem[],
-  player: PlayerId,
-): number[] {
+
+function getGlobalPickNumbers(mode: Mode, player: PlayerId): number[] {
   const result: number[] = [];
   let global = 1;
-  for (const item of draftQueue) {
-    if (item.type === "pick") {
-      if (item.player === player) result.push(global);
+  for (const segment of MODES[mode].draftScript) {
+    if (segment.type !== "pick") continue;
+    for (let i = 0; i < (segment.count ?? 0); i++) {
+      if (segment.player === player) result.push(global);
       global++;
     }
   }
@@ -232,20 +232,20 @@ function PlayerList({
 
 export function PickList({
   rosters,
-  draftQueue,
+  mode,
   picksPerPlayer,
   displayName,
   player,
   pendingAgent,
 }: {
   rosters: Record<PlayerId, Agent[]>;
-  draftQueue: DraftQueueItem[];
+  mode: Mode;
   picksPerPlayer: number;
   displayName: (p: PlayerId | null) => string;
   player: PlayerId;
   pendingAgent?: Agent | null;
 }) {
-  const picks = getGlobalPickNumbers(draftQueue, player);
+  const picks = getGlobalPickNumbers(mode, player);
 
   return (
     <PlayerList

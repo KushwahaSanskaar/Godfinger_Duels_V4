@@ -88,9 +88,9 @@ export function BossRoll({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] gap-5 md:gap-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] items-center gap-5 md:gap-8 py-6">
           {/* Boss illustration */}
-          <div className="relative min-h-[320px] md:min-h-[440px] overflow-hidden bg-[#221B31] border-2 border-[#68517C] flex items-center justify-center">
+          <div className="relative w-full max-w-[min(72vw,40vh)] lg:w-[min(34vw,43vh,640px)] lg:max-w-none aspect-[121/167] mx-auto overflow-hidden bg-[#221B31] border-2 border-[#68517C] flex items-center justify-center">
             {revealed && !imageFailed ? (
               <img
                 key={currentBoss.id}

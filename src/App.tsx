@@ -50,7 +50,9 @@ export default function App() {
     game.phase === "ban"
       ? game.banTurn
       : game.phase === "draft"
-        ? (game.draftItem?.player ?? null)
+        ? !game.activeEvent && game.extraBans?.length
+          ? game.extraBans[0].player
+          : (game.draftItem?.player ?? null)
         : null;
 
   return (
@@ -104,7 +106,7 @@ export default function App() {
               <div className="w-64 flex-shrink-0">
                 <PickList
                   rosters={game.rosters}
-                  draftQueue={game.draftQueue}
+                  mode={game.mode}
                   picksPerPlayer={game.cfg.picksPerPlayer}
                   displayName={game.displayName}
                   player="p1"
@@ -161,7 +163,7 @@ export default function App() {
               <div className="w-64 flex-shrink-0">
                 <PickList
                   rosters={game.rosters}
-                  draftQueue={game.draftQueue}
+                  mode={game.mode}
                   picksPerPlayer={game.cfg.picksPerPlayer}
                   displayName={game.displayName}
                   player="p2"
