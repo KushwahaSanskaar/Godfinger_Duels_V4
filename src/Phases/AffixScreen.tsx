@@ -1,5 +1,5 @@
 import { AgentCard } from "../Components/AgentCard";
-import type { AffixChoice, AffixPickSpec, PlayerId } from "../types";
+import type { Agent, AffixChoice, AffixPickSpec, PlayerId } from "../types";
 import type { AffixDef } from "../Data/Events/affixes";
 import type { AffixOffer } from "../Logic/interludeRules";
 
@@ -67,8 +67,45 @@ function AffixCard({
   );
 }
 
+// Both rosters, read-only, so the player choosing knows what each affix would do to
+// whom (what a Soul Stone would replace, what Kamikaze or Overworked could hit...).
+function RosterPanel({
+  player,
+  name,
+  roster,
+  role,
+}: {
+  player: PlayerId;
+  name: string;
+  roster: Agent[];
+  role: string;
+}) {
+  return (
+    <div
+      className={`border-t-4 ${
+        player === "p1" ? "border-p1" : "border-p2"
+      } bg-[#141420] p-4 flex flex-col gap-3`}
+    >
+      <div className="flex justify-between items-center gap-3">
+        <span className={`font-pixel text-xs ${accentOf(player)}`}>
+          {name.toUpperCase()}’S ROSTER · {role}
+        </span>
+        <span className="font-pixel text-xs text-text-muted">
+          {roster.length} AGENTS
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {roster.map((agent) => (
+          <AgentCard key={agent.id} agent={agent} size={64} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface AffixScreenProps {
   offer: AffixOffer;
+  rosters: Record<PlayerId, Agent[]>;
   choice: AffixChoice | null;
   pick: AffixPickSpec | null;
   selection: string[];
@@ -81,6 +118,7 @@ interface AffixScreenProps {
 
 export function AffixScreen({
   offer,
+  rosters,
   choice,
   pick,
   selection,
@@ -128,6 +166,17 @@ export function AffixScreen({
             buttonLabel={`GIVE TO ${displayName(leader).toUpperCase()}`}
             onClick={() => onChoose("negative")}
           />
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 w-full max-w-[1100px]">
+          {(["p1", "p2"] as PlayerId[]).map((p) => (
+            <RosterPanel
+              key={p}
+              player={p}
+              name={displayName(p)}
+              roster={rosters[p]}
+              role={p === chooser ? "CHOOSING" : "LEADING"}
+            />
+          ))}
         </div>
       </div>
     );

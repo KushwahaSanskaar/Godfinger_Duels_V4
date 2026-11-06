@@ -21,7 +21,7 @@ import {
   OVERTIME_STREAK_TO_WIN,
 } from "../Data/modes";
 import type { ModifierDef } from "../Data/Events/universalModifiers";
-import { BOSS_POOL, type Boss } from "../Data/bosses";
+import { BOSS_POOL, pickBoss, type Boss } from "../Data/bosses";
 import { COOLDOWN_ROUNDS } from "../Data/timers";
 import {
   REMOVAL_COUNT,
@@ -37,7 +37,7 @@ import {
   anyRevivable,
   contractCandidates,
   kamikazeApplies,
-  lastSquadSurvivors,
+  kamikazeCandidates,
   leaderOf,
   ownRevivable,
   rollAffixOffer,
@@ -48,6 +48,7 @@ import {
   type AffixOffer,
   type InterludeContext,
 } from "../Logic/interludeRules";
+import { hasTime, timeSeconds } from "../Logic/timeInput";
 import {
   DraftEventDef,
   ExtraBanTurn,
@@ -193,6 +194,11 @@ export function useGameState() {
     useTracked<PlayerId | null>(null);
   const [roundStage, setRoundStage] = useTracked<RoundStage>("boss");
   const [currentBoss, setCurrentBoss] = useTracked<Boss | null>(null);
+  // The boss rolled most recently (kept after the round ends): it is rolled less often.
+  const [lastBossId, setLastBossId] = useTracked<string | null>(null);
+  // Preset Teams: the team rolled after the reveal. Both players play it; the squads
+  // they picked before stay in `squads` and are what the round's consequences hit.
+  const [presetTeam, setPresetTeam] = useTracked<string[] | null>(null);
   const [squads, setSquads] = useTracked<Record<PlayerId, string[]>>({
     p1: [],
     p2: [],
@@ -779,13 +785,13 @@ export function useGameState() {
   // ----- Boss roll -----
 
   function rollBoss() {
-    setCurrentBoss(
-      memoRoll(
-        `boss:${round}:${roundAttempt}`,
-        null,
-        () => BOSS_POOL[Math.floor(Math.random() * BOSS_POOL.length)],
-      ),
+    const boss = memoRoll(
+      `boss:${round}:${roundAttempt}`,
+      { last: lastBossId },
+      () => pickBoss(BOSS_POOL, lastBossId),
     );
+    setCurrentBoss(boss);
+    if (boss) setLastBossId(boss.id);
   }
 
   // The squads are settled. A secret modifier is announced now, before the round
@@ -795,6 +801,26 @@ export function useGameState() {
       setRoundStage("reveal");
       return;
     }
+    afterReveal();
+  }
+
+  // Preset Teams: the squads the players picked stay on the line, but a random team
+  // (the same for both) is what actually fights. Shown on its own screen first.
+  function afterReveal() {
+    if (roundEffects.modifier?.id === "preset-teams") {
+      const team = memoRoll(`preset:${round}:${roundAttempt}`, null, () =>
+        rollPresetTeam(pool),
+      );
+      setPresetTeam(team);
+      setRoundStage("preset");
+      return;
+    }
+    beginScore();
+  }
+
+  function acknowledgePreset() {
+    if (roundStage !== "preset") return;
+    if (!claimTurn(`preset:${round}:${roundAttempt}`)) return;
     beginScore();
   }
 
@@ -806,7 +832,7 @@ export function useGameState() {
       ...e,
       modifier: e.modifier ? { ...e.modifier, hidden: false } : null,
     }));
-    beginScore();
+    afterReveal();
   }
 
   function beginScore() {
@@ -828,23 +854,12 @@ export function useGameState() {
     setSwapped(false);
     setForcedPick({ p1: null, p2: null });
     setMorphChoices({ p1: {}, p2: {} });
+    setPresetTeam(null);
   }
 
   function confirmBossAndBeginSquad() {
     const mod = roundEffects.modifier?.id;
     resetSquadBuilding();
-    if (mod === "preset-teams") {
-      // The team is handed out, so the selection screen is skipped.
-      // one team, both players (true mirror)
-      const team = memoRoll(`preset:${round}:${roundAttempt}`, null, () =>
-        rollPresetTeam(pool),
-      );
-      setSquads({ p1: team, p2: team });
-      setSquadsConfirmed({ p1: true, p2: true });
-      lockedSquadRef.current = { p1: true, p2: true };
-      startBattle();
-      return;
-    }
     if (mod === "tunnel-vision") {
       // One random agent each is already in the squad (and locked there). The
       // players still choose the other two.
@@ -906,6 +921,48 @@ export function useGameState() {
     });
   }
 
+  // An Invitation that has become an agent is permanent: the agent takes the item's
+  // place in the roster (and the squad) and is an ordinary agent from then on. Soul
+  // Stones stay items. An agent the player already owns can't be added twice, so
+  // that (Invitation+ only) case stays a temporary form.
+  function splitInvitations(
+    p: PlayerId,
+    squad: string[],
+    forms: Record<string, string>,
+  ): {
+    squad: string[];
+    forms: Record<string, string>;
+    swaps: Record<string, Agent>;
+  } {
+    const owned = ownedIdsOf(p);
+    const swaps: Record<string, Agent> = {};
+    const rest: Record<string, string> = {};
+    Object.entries(forms).forEach(([itemId, agentId]) => {
+      const agent = pool.find((a) => a.id === agentId);
+      const item = MORPH_ITEMS[itemId];
+      if (item && !item.soulStone && agent && !owned.includes(agentId))
+        swaps[itemId] = agent;
+      else rest[itemId] = agentId;
+    });
+    return {
+      squad: squad.map((id) => swaps[id]?.id ?? id),
+      forms: rest,
+      swaps,
+    };
+  }
+
+  function applyRosterSwaps(p: PlayerId, swaps: Record<string, Agent>) {
+    if (Object.keys(swaps).length === 0) return;
+    setRosters((r) => ({
+      ...r,
+      [p]: r[p].map((a) => swaps[a.id] ?? a),
+    }));
+    setForcedPick((f) => {
+      const forced = f[p];
+      return forced && swaps[forced] ? { ...f, [p]: swaps[forced].id } : f;
+    });
+  }
+
   // Popup result. For an item that is not in the squad yet this is also the "pick":
   // the item joins the squad together with its chosen form. (A Tunnel Vision item is
   // already in the squad, so only the form is set.)
@@ -927,6 +984,20 @@ export function useGameState() {
       setSquads((s) =>
         s[p].includes(itemId) ? s : { ...s, [p]: [...s[p], itemId] },
       );
+    }
+    const conv = splitInvitations(
+      p,
+      squads[p].includes(itemId) ? squads[p] : [...squads[p], itemId],
+      { [itemId]: agentId },
+    );
+    if (conv.swaps[itemId]) {
+      // the Invitation is used up: its agent is now a permanent part of the roster
+      setSquads((s) => ({
+        ...s,
+        [p]: s[p].map((id) => (id === itemId ? agentId : id)),
+      }));
+      applyRosterSwaps(p, conv.swaps);
+      return;
     }
     setMorphChoices((m) => ({ ...m, [p]: { ...m[p], [itemId]: agentId } }));
   }
@@ -1019,8 +1090,10 @@ export function useGameState() {
       mainSizeOf(player),
       forcedPick[player] ? [forcedPick[player] as string] : [],
     );
-    setSquads((s) => ({ ...s, [player]: filled }));
-    setMorphChoices((m) => ({ ...m, [player]: resolveMorphs(player, filled) }));
+    const conv = splitInvitations(player, filled, resolveMorphs(player, filled));
+    setSquads((s) => ({ ...s, [player]: conv.squad }));
+    setMorphChoices((m) => ({ ...m, [player]: conv.forms }));
+    applyRosterSwaps(player, conv.swaps);
     lockInSquad(player);
   }
 
@@ -1077,13 +1150,16 @@ export function useGameState() {
     setControlLocked({ ...controlLockedRef.current });
     setControlPicks((c) => ({ ...c, [target]: agentId }));
     // the chosen agent becomes the target's last squad slot
-    setSquads((s) => ({ ...s, [target]: [...s[target], agentId] }));
-    // the opponent chose a Soul Stone / Invitation for them: its form is rolled for them
-    if (isMorphItem(agentId))
-      setMorphChoices((m) => ({
-        ...m,
-        [target]: resolveMorphs(target, [...squads[target], agentId]),
-      }));
+    if (isMorphItem(agentId)) {
+      // the opponent chose a Soul Stone / Invitation for them: its form is rolled for them
+      const full = [...squads[target], agentId];
+      const conv = splitInvitations(target, full, resolveMorphs(target, full));
+      setSquads((s) => ({ ...s, [target]: conv.squad }));
+      setMorphChoices((m) => ({ ...m, [target]: conv.forms }));
+      applyRosterSwaps(target, conv.swaps);
+    } else {
+      setSquads((s) => ({ ...s, [target]: [...s[target], agentId] }));
+    }
     finishSquadStageIfDone();
   }
 
@@ -1124,10 +1200,7 @@ export function useGameState() {
 
   function confirmPlayerTime(player: PlayerId) {
     const t = timeInputs[player];
-    if (t.seconds === "") return;
-    const m = Number(t.minutes || 0);
-    const s = Number(t.seconds);
-    if (Number.isNaN(m) || Number.isNaN(s)) return;
+    if (!hasTime(t)) return;
 
     const next = { ...submitted, [player]: true };
     setSubmitted(next);
@@ -1137,13 +1210,9 @@ export function useGameState() {
   }
 
   function resolveRoundNormal() {
-    const m1 = Number(timeInputs.p1.minutes || 0);
-    const s1 = Number(timeInputs.p1.seconds);
-    const m2 = Number(timeInputs.p2.minutes || 0);
-    const s2 = Number(timeInputs.p2.seconds);
     // "Hold on, Wait for me!" adds its seconds to the target's total time.
-    const t1 = m1 * 60 + s1 + roundEffects.timePenalty.p1;
-    const t2 = m2 * 60 + s2 + roundEffects.timePenalty.p2;
+    const t1 = timeSeconds(timeInputs.p1) + roundEffects.timePenalty.p1;
+    const t2 = timeSeconds(timeInputs.p2) + roundEffects.timePenalty.p2;
     const loser: PlayerId | null = t1 === t2 ? null : t1 < t2 ? "p2" : "p1";
     finalizeRound(loser, t1, t2, "score");
   }
@@ -1158,27 +1227,24 @@ export function useGameState() {
 
     const loser: PlayerId = submitted.p1 ? "p2" : "p1";
     const t1 =
-      submitted.p1 && timeInputs.p1.seconds !== ""
-        ? Number(timeInputs.p1.minutes || 0) * 60 +
-          Number(timeInputs.p1.seconds)
+      submitted.p1 && hasTime(timeInputs.p1)
+        ? timeSeconds(timeInputs.p1)
         : 0;
     const t2 =
-      submitted.p2 && timeInputs.p2.seconds !== ""
-        ? Number(timeInputs.p2.minutes || 0) * 60 +
-          Number(timeInputs.p2.seconds)
+      submitted.p2 && hasTime(timeInputs.p2)
+        ? timeSeconds(timeInputs.p2)
         : 0;
     finalizeRound(loser, t1, t2, "timeout");
   }
 
-  // Squads that come from a modifier (not the player's own picks) can include
-  // agents the loser doesn't own, so those rounds let the loser remove ANY agents
-  // from their roster instead of only from the squad.
+  // Armory Swap squads can include agents the loser doesn't own, so that round lets
+  // the loser remove ANY agents from their roster. Preset Teams is not one of them:
+  // the squad the player picked beforehand is what is on the line.
   function removalFromWholeRoster(): boolean {
-    const m = roundEffects.modifier?.id;
-    return m === "tunnel-vision" || m === "preset-teams" || m === "armory-swap";
+    return roundEffects.modifier?.id === "armory-swap";
   }
 
-  // Soul Stones / Invitations stay visible on the removal screen, already selected and
+  // Soul Stones stay visible on the removal screen, already selected and
   // locked. It counts toward the removal count, so the loser only chooses the
   // rest. Nothing leaves the roster until the removal is confirmed.
   function removalCountFor(p: PlayerId): number {
@@ -1187,21 +1253,19 @@ export function useGameState() {
 
   function buildPendingRemovalFor(loser: PlayerId): PendingRemoval {
     const count = removalCountFor(loser);
-    // Soul Stones and Invitations used in a lost round are always removed first.
+    // Soul Stones used in a lost round are always removed first.
     const { pool, locked } = removalPlan({
       squad: squads[loser],
       rosterIds: rosters[loser].map((a) => a.id),
       wholeRoster: removalFromWholeRoster(),
       count,
-      isForced: isMorphItem,
+      isForced: isSoulStone, // Invitations become real agents once used
     });
     return { player: loser, count, pool, locked };
   }
 
-  // Remember who has played (Horizontal Investment). Preset teams aren't the
-  // players' own picks, so they don't count.
+  // Remember who has played (Horizontal Investment): the squads the players picked.
   function recordPlayed() {
-    if (roundEffects.modifier?.id === "preset-teams") return;
     setPlayedHistory((h) => ({
       p1: Array.from(new Set([...h.p1, ...squads.p1])),
       p2: Array.from(new Set([...h.p2, ...squads.p2])),
@@ -1353,23 +1417,19 @@ export function useGameState() {
       }
     }
 
-    const presetRound = roundEffects.modifier?.id === "preset-teams";
     const nextGrayed: Record<PlayerId, Record<string, number>> = {
       p1: {},
       p2: {},
     };
     (["p1", "p2"] as PlayerId[]).forEach((p) => {
-      // Preset Teams wipes every normal cooldown (the agents were handed out).
-      nextGrayed[p] = presetRound
-        ? {}
-        : nextCooldowns({
-            rosterIds: rosters[p].map((a) => a.id),
-            cooldowns: grayedOut[p],
-            squad: squads[p],
-            eliminated: eliminated[p], // only THIS player's eliminations
-            cooldownRounds: COOLDOWN_ROUNDS,
-            immune: immune[p],
-          });
+      nextGrayed[p] = nextCooldowns({
+        rosterIds: rosters[p].map((a) => a.id),
+        cooldowns: grayedOut[p],
+        squad: squads[p],
+        eliminated: eliminated[p], // only THIS player's eliminations
+        cooldownRounds: COOLDOWN_ROUNDS,
+        immune: immune[p],
+      });
     });
     setGrayedOut(nextGrayed);
     // Overworked fatigue ticks down once per decided round.
@@ -1399,7 +1459,7 @@ export function useGameState() {
   }
 
   function toggleRemoval(agentId: string) {
-    if (pendingRemoval?.locked?.includes(agentId)) return; // Soul Stones / Invitations used this round are always removed
+    if (pendingRemoval?.locked?.includes(agentId)) return; // Soul Stones used this round are always removed
     setRemovalSelection((sel) =>
       sel.includes(agentId)
         ? sel.filter((id) => id !== agentId)
@@ -1425,7 +1485,7 @@ export function useGameState() {
       ...eliminatedPool,
       [player]: [
         ...eliminatedPool[player],
-        ...removedAgents.filter((a) => !isSoulStone(a.id)),
+        ...removedAgents.filter((a) => !isMorphItem(a.id)),
       ],
     };
     setRosters(nextRosters);
@@ -1546,7 +1606,7 @@ export function useGameState() {
             "NO EFFECT — Kamikaze can’t touch this player right now.",
           );
         return {
-          candidates: byId(lastSquadSurvivors(interludeCtx, target)),
+          candidates: byId(kamikazeCandidates(interludeCtx, target)),
           min: 2,
           max: 2,
           label: "CHOOSE 2 AGENTS FROM LAST ROUND TO ELIMINATE",
@@ -1851,6 +1911,8 @@ export function useGameState() {
     setPendingRoundWinner(null);
     setRoundStage("boss");
     setCurrentBoss(null);
+    setLastBossId(null);
+    setPresetTeam(null);
     setSquads({ p1: [], p2: [] });
     setSquadsConfirmed({ p1: false, p2: false });
     setGrayedOut({ p1: {}, p2: {} });
@@ -1968,13 +2030,17 @@ export function useGameState() {
   function togglePause() {
     setPaused((v) => !v);
   }
-  const battleSquads: Record<PlayerId, string[]> = swapped
-    ? { p1: squads.p2, p2: squads.p1 }
-    : squads;
+  const battleSquads: Record<PlayerId, string[]> = presetTeam
+    ? { p1: presetTeam, p2: presetTeam }
+    : swapped
+      ? { p1: squads.p2, p2: squads.p1 }
+      : squads;
   // morph forms belong to whoever built the squad, so they swap along with it
-  const battleMorphs: Record<PlayerId, Record<string, string>> = swapped
-    ? { p1: morphChoices.p2, p2: morphChoices.p1 }
-    : morphChoices;
+  const battleMorphs: Record<PlayerId, Record<string, string>> = presetTeam
+    ? { p1: {}, p2: {} }
+    : swapped
+      ? { p1: morphChoices.p2, p2: morphChoices.p1 }
+      : morphChoices;
 
   return {
     mode,
@@ -2034,6 +2100,8 @@ export function useGameState() {
     battleSquads, // what each player actually plays (swapped under Armory Swap)
     morphChoices,
     battleMorphs,
+    presetTeam,
+    acknowledgePreset,
     morphOptionsFor,
     chooseMorph,
     submitted,

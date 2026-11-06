@@ -155,12 +155,12 @@ export const DRAFT_EVENTS: DraftEventDef[] = [
     weight: 25,
     desc: "A random unbanned, unpicked Agent is selected for both players, then the draft continues as normal.",
   },
-  {
-    id: "remote-control",
-    title: "Remote Control",
-    weight: 5,
-    desc: "Both players may pick their opponent's next Agent.",
-  }, // flavor-only, no mechanical effect
+  // {
+  //   id: "remote-control",
+  //   title: "Remote Control",
+  //   weight: 5,
+  //   desc: "Both players may pick their opponent's next Agent.",
+  // }, // flavor-only, no mechanical effect
 ];
 
 // Invitations: derived from the roster items so the two can never disagree.

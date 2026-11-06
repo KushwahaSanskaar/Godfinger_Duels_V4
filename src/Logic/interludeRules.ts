@@ -9,6 +9,7 @@ import {
 import {
   SOUL_STONE_AGENT,
   SOUL_STONE_PLUS_AGENT,
+  isMorphItem,
   isSoulStone,
 } from "../Data/morphItems";
 
@@ -43,7 +44,7 @@ function uniqueById(list: Agent[]): Agent[] {
 export function ownRevivable(ctx: InterludeContext, p: PlayerId): Agent[] {
   const owned = new Set(ctx.rosters[p].map((a) => a.id));
   return uniqueById(ctx.eliminatedPool[p]).filter(
-    (a) => !isSoulStone(a.id) && !owned.has(a.id),
+    (a) => !isMorphItem(a.id) && !owned.has(a.id),
   );
 }
 
@@ -53,7 +54,7 @@ export function anyRevivable(ctx: InterludeContext, p: PlayerId): Agent[] {
   return uniqueById([
     ...ctx.eliminatedPool.p1,
     ...ctx.eliminatedPool.p2,
-  ]).filter((a) => !isSoulStone(a.id) && !owned.has(a.id));
+  ]).filter((a) => !isMorphItem(a.id) && !owned.has(a.id));
 }
 
 // Agents from the round that just ended that are still on `p`'s roster.
@@ -75,15 +76,23 @@ export function contractCandidates(
   return lastSquadSurvivors(ctx, p).filter((id) => !already.includes(id));
 }
 
-// Kamikaze only bites a player who WON the last battle, has 2+ survivors from
-// that squad, and can afford to lose 2. Otherwise it is wasted ("no effect").
+// The agents Kamikaze may eliminate: 2 of the ones the player picked last round.
+export function kamikazeCandidates(
+  ctx: InterludeContext,
+  target: PlayerId,
+): string[] {
+  return lastSquadSurvivors(ctx, target);
+}
+
+// Kamikaze only bites a player who WON the last battle, has 2+ agents it can take,
+// and can afford to lose 2. Otherwise it is wasted ("no effect").
 export function kamikazeApplies(
   ctx: InterludeContext,
   target: PlayerId,
 ): boolean {
   return (
     ctx.lastWinner === target &&
-    lastSquadSurvivors(ctx, target).length >= 2 &&
+    kamikazeCandidates(ctx, target).length >= 2 &&
     ctx.rosters[target].length - 2 >= ctx.minRoster
   );
 }
@@ -155,14 +164,18 @@ export function rollModifier(
 }
 
 // ---------- Preset Teams ----------
-// A team is 3 agents: 1-2 from Attack/Anomaly/Rupture/Armorer, 0-1 Stun and
-// 1-2 from Support/Defense. Banned agents are allowed; only the Soul Stone isn't
-// part of the pool. Both players get the same team.
+// A team is 3 agents. The first Attack/Anomaly/Rupture/Armorer agent is the team's DPS.
+// Normal teams (banned agents are allowed; only the Soul Stone isn't in the pool):
+//   DPS + 2 Stun, DPS + 2 Support/Defense, or the older mixes (DPS + Stun + Support,
+//   2 DPS + Support). Both players get the same team.
+// Special DPS agents replace that with their own set of teams (see SPECIAL_TEAMS).
+// The squads the players picked beforehand are what is at stake, not this team.
 const CORE = ["Attack", "Anomaly", "Rupture", "Armorer"];
 const STUN = ["Stun"];
 const SUPPORT = ["Support", "Defense"];
 const SHAPES: [number, number, number][] = [
-  [1, 0, 2],
+  [1, 2, 0], // DPS + 2 Stun
+  [1, 0, 2], // DPS + 2 Support/Defense
   [2, 0, 1],
   [1, 1, 1],
 ];
@@ -176,11 +189,36 @@ function sample<T>(list: T[], n: number, rng: () => number): T[] {
   return out;
 }
 
-// Hugo Vlad only works with Stunners: if he is rolled, the rest of the team is
-// re-rolled to hold 1-2 Stun agents. With 3 slots, 2 Stunners leave no room for a
-// Support/Defense, so his teams are Hugo + 1 Stun + 1 Support/Defense, or
-// Hugo + 2 Stun.
 export const HUGO_ID = "hugo";
+export const REMIELLE_ID = "remielle";
+export const ORPHIE_ID = "orphie_magus";
+export const SEED_ID = "seed";
+
+type Draw = (matches: (a: Agent) => boolean, n: number) => Agent[];
+
+// Special teams, used when the DPS is one of these agents (the DPS itself is kept).
+//   Hugo      + 2 Stun, or 1 Stun + 1 Support/Defense (he only works with Stunners)
+//   Remielle  + 2 Anomaly
+//   Orphie    + 1 Attack + (1 Stun or 1 Support/Defense)
+//   Seed      + 1 Attack + (1 Stun or 1 Support/Defense)
+const SPECIAL_TEAMS: Record<string, (draw: Draw, rng: () => number) => Agent[]> = {
+  [HUGO_ID]: (draw, rng) => {
+    const stunners = rng() < 0.5 ? 1 : 2;
+    return [
+      ...draw((a) => STUN.includes(a.specialty), stunners),
+      ...draw((a) => SUPPORT.includes(a.specialty), 2 - stunners),
+    ];
+  },
+  [REMIELLE_ID]: (draw) => draw((a) => a.specialty === "Anomaly", 2),
+  [ORPHIE_ID]: (draw, rng) => {
+    const third = rng() < 0.5 ? STUN : SUPPORT; // decided once, not per agent
+    return [
+      ...draw((a) => a.specialty === "Attack", 1),
+      ...draw((a) => third.includes(a.specialty), 1),
+    ];
+  },
+  [SEED_ID]: (draw, rng) => SPECIAL_TEAMS[ORPHIE_ID](draw, rng),
+};
 
 export function rollPresetTeam(
   agents: Agent[],
@@ -205,24 +243,21 @@ export function rollPresetTeam(
       rng,
     ),
   ];
-  const hugo = team.find((a) => a.id === HUGO_ID);
-  if (hugo) {
-    const stunners = rng() < 0.5 ? 1 : 2;
-    return [
-      hugo,
-      ...sample(
-        usable.filter((a) => STUN.includes(a.specialty)),
-        stunners,
-        rng,
+  const dps = team.find((a) => a.id in SPECIAL_TEAMS);
+  if (!dps) return team.map((a) => a.id);
+
+  // Fillers never include another special agent, so two special rules can't clash
+  // (e.g. a Seed team holding a Hugo with no Stunner).
+  const draw: Draw = (matches, n) =>
+    sample(
+      usable.filter(
+        (a) => matches(a) && a.id !== dps.id && !(a.id in SPECIAL_TEAMS),
       ),
-      ...sample(
-        usable.filter((a) => SUPPORT.includes(a.specialty)),
-        2 - stunners,
-        rng,
-      ),
-    ].map((a) => a.id);
-  }
-  return team.map((a) => a.id);
+      n,
+      rng,
+    );
+  // Remielle's partners are Anomaly agents; no other special agent is one.
+  return [dps, ...SPECIAL_TEAMS[dps.id](draw, rng)].map((a) => a.id);
 }
 
 // ---------- Tunnel Vision ----------

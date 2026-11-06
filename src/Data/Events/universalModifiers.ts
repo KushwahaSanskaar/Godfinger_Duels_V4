@@ -37,7 +37,7 @@ export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
     title: "Preset Teams",
     flair: "???",
     secret: true,
-    desc: "Ironically the true mirror match, disregard the teams that are picked and randomly roll a team for both players to use for this upcoming battle.",
+    desc: "Ironically the true mirror match. Pick your squad as usual, then a random team is rolled for both players to use for this upcoming battle. If you lose, the Agents you picked are the ones on the line.",
     ready: true,
   },
   {

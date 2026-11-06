@@ -70,10 +70,12 @@ export interface RoundLogEntry {
 
 // "affix" / "modifier" are the between-round screens that come BEFORE the boss roll.
 // "reveal" = a secret modifier is announced after squad select, right before the round.
+// "preset" = Preset Teams: the random team that is actually played is shown.
 export type RoundStage =
   | "boss"
   | "squad"
   | "reveal"
+  | "preset"
   | "score"
   | "affix"
   | "modifier";
@@ -84,7 +86,7 @@ export interface PendingRemoval {
   player: PlayerId;
   count: number;
   pool: string[]; // agent ids eligible for removal — that round's squad
-  locked?: string[]; // agent ids that are always removed (Soul Stones, Invitations)
+  locked?: string[]; // agent ids that are always removed (Soul Stones; an used Invitation is a normal agent)
 }
 
 export type Mode = keyof typeof MODES;

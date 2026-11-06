@@ -197,6 +197,8 @@ export default function App() {
               onConfirmAffix={game.confirmAffix}
               onAcknowledgeModifier={game.acknowledgeModifier}
               onAcknowledgeReveal={game.acknowledgeReveal}
+              presetTeam={game.presetTeam}
+              onAcknowledgePreset={game.acknowledgePreset}
               squadPlan={game.squadPlan}
               battleSquads={game.battleSquads}
               morphChoices={game.morphChoices}

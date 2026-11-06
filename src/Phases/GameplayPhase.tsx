@@ -16,6 +16,7 @@ import { SquadSelect } from "./SquadSelect";
 import { ScoreSubmit } from "./ScoreSubmit";
 import { AffixScreen } from "./AffixScreen";
 import { ModifierScreen } from "./ModifierScreen";
+import { PresetScreen } from "./PresetScreen";
 import { UNIVERSAL_MODIFIERS } from "../Data/Events/universalModifiers";
 import { ActiveEffects } from "../Components/ActiveEffects";
 
@@ -83,6 +84,8 @@ interface GameplayPhaseProps {
   onConfirmAffix: () => void;
   onAcknowledgeModifier: () => void;
   onAcknowledgeReveal: () => void;
+  presetTeam: string[] | null;
+  onAcknowledgePreset: () => void;
 }
 
 export function GameplayPhase({
@@ -137,12 +140,15 @@ export function GameplayPhase({
   onConfirmAffix,
   onAcknowledgeModifier,
   onAcknowledgeReveal,
+  presetTeam,
+  onAcknowledgePreset,
 }: GameplayPhaseProps) {
   // The screens that come BEFORE the boss roll.
   if (roundStage === "affix" && affixOffer) {
     return (
       <AffixScreen
         offer={affixOffer}
+        rosters={rosters}
         choice={affixChoice}
         pick={affixPick}
         selection={affixSelection}
@@ -174,6 +180,20 @@ export function GameplayPhase({
           onAcknowledge={onAcknowledgeReveal}
         />
       );
+  }
+
+  // Preset Teams: the rolled team that is actually played.
+  if (roundStage === "preset" && presetTeam) {
+    return (
+      <PresetScreen
+        team={presetTeam}
+        squads={squads}
+        lookup={[...rosters.p1, ...rosters.p2, ...pool]}
+        morphs={morphChoices}
+        displayName={displayName}
+        onAcknowledge={onAcknowledgePreset}
+      />
+    );
   }
 
   // Everything that follows shows what is in force for this battle. A secret modifier
@@ -246,6 +266,7 @@ export function GameplayPhase({
         squads={battleSquads}
         morphs={battleMorphs}
         swapped={effects.modifier?.id === "armory-swap"}
+        preset={effects.modifier?.id === "preset-teams"}
         timeInputs={timeInputs}
         submitted={submitted}
         onTimeChange={onTimeChange}

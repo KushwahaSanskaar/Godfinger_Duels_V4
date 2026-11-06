@@ -5,7 +5,8 @@ import { AgentCard } from "../Components/AgentCard";
 import { AgentPool } from "../Components/AgentPool";
 import { TIMER_CONFIG } from "../Data/timers";
 import { roundLabel, OVERTIME_STREAK_TO_WIN } from "../Data/modes";
-import { displayForm, isMorphItem } from "../Data/morphItems";
+import { displayForm, isSoulStone } from "../Data/morphItems";
+import { hasTime } from "../Logic/timeInput";
 
 interface ScoreSubmitProps {
   pool: Agent[];
@@ -13,6 +14,7 @@ interface ScoreSubmitProps {
   round: number;
   totalRounds: number;
   swapped: boolean;
+  preset: boolean;
   timePenalty: Record<PlayerId, number>;
   bossName: string | undefined;
   roundWins: Record<PlayerId, number>;
@@ -50,6 +52,7 @@ function PlayerPanel({
   roster,
   pool,
   swapped,
+  preset,
   penalty,
   squad,
   morphs,
@@ -67,6 +70,7 @@ function PlayerPanel({
   player: PlayerId;
   roster: Agent[];
   swapped: boolean; // Armory Swap: this player is playing the OTHER squad
+  preset: boolean; // Preset Teams: the removal pool is the squad they PICKED
   pool: Agent[]; // everything a squad can hold: the pool plus both rosters (Preset Teams, Armory Swap, Soul Stones)
   penalty: number; // seconds added to this player's time
   squad: string[];
@@ -87,6 +91,8 @@ function PlayerPanel({
   const border = isP1 ? "border-p1" : "border-p2";
   const background = isP1 ? "bg-p1" : "bg-p2";
   const isRemoving = pendingRemoval?.player === player;
+  // Confirm only works once a time is typed in (and not again if it is cleared).
+  const canConfirm = hasTime(input);
   const selectedAgents = squad.map((id) => pool.find((a) => a.id === id));
   const removable = isRemoving
     ? roster.filter((a) => pendingRemoval.pool.includes(a.id))
@@ -184,11 +190,11 @@ function PlayerPanel({
             SELECT AGENTS TO REMOVE
           </div>
           <p className="text-sm text-text-muted mb-4">
-            Choose {pendingRemoval.count} of this round's agents (
+            Choose {pendingRemoval.count} of {preset ? "the agents you picked" : "this round's agents"} (
             {removalSelection.length}/{pendingRemoval.count})
             {((pendingRemoval.locked?.length ?? 0) > 0 ||
-              pendingRemoval.pool.every(isMorphItem)) &&
-              " — Soul Stones and Invitations used this round are removed first"}
+              pendingRemoval.pool.every(isSoulStone)) &&
+              " — Soul Stones used this round are removed first"}
           </p>
           <div className="grid grid-cols-6 gap-3 w-fit mx-auto mb-5">
             {removable.map((agent) => (
@@ -255,13 +261,13 @@ function PlayerPanel({
             {/* CONFIRM BUTTON */}
             <button
               onClick={() => onConfirmTime(player)}
-              disabled={locked}
+              disabled={locked || !canConfirm}
               className={`
       px-6 py-4
       font-pixel text-sm font-bold text-white
       whitespace-nowrap
       ${background}
-      ${locked ? "opacity-20 cursor-not-allowed" : "hover:brightness-110"}
+      ${locked || !canConfirm ? "opacity-20 cursor-not-allowed" : "hover:brightness-110"}
     `}
             >
               {locked ? "LOCKED IN" : "CONFIRM TIME"}
@@ -305,6 +311,7 @@ export function ScoreSubmit({
   round,
   totalRounds,
   swapped,
+  preset,
   bossName,
   roundWins,
   overtimeStreak,
@@ -343,6 +350,7 @@ export function ScoreSubmit({
 
   // Preserve original sudden-death behavior.
   function handleConfirmTime(player: PlayerId) {
+    if (!hasTime(timeInputs[player])) return; // nothing entered: don't start the countdown
     onConfirmTime(player);
     const opponent: PlayerId = player === "p1" ? "p2" : "p1";
     if (
@@ -399,6 +407,7 @@ export function ScoreSubmit({
             roster={rosters[player]}
             pool={squadLookup}
             swapped={swapped}
+            preset={preset}
             penalty={timePenalty[player]}
             squad={squads[player]}
             morphs={morphs[player]}
