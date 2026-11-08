@@ -49,14 +49,14 @@ export const AFFIXES: AffixDef[] = [
     title: "Mind Control",
     polarity: "negative",
     ready: true,
-    desc: "After the currently winning player locks in Agents 1 and 2, the losing player chooses their opponent’s 3rd Agent.",
+    desc: "After the currently winning player locks in Agents 1 and 2, the losing player chooses their opponent's 3rd Agent.",
   },
   {
     id: "kamikaze",
     title: "Kamikaze",
     polarity: "negative",
     ready: true,
-    desc: "For one round, you’re forced to also eliminate 2 of the 3 Agents that you used last round.",
+    desc: "For one round, make your opponent eliminate 2 of the 3 Agents that they used last round.",
   },
   {
     id: "overtime-contract",
@@ -91,6 +91,6 @@ export const AFFIXES: AffixDef[] = [
     title: "Spell of Necromancy",
     polarity: "positive",
     ready: true,
-    desc: "Sacrifice 2 of your current remaining Agents in exchange for 2 eliminated Agents. Not just YOUR eliminated Agents, everyone’s eliminated Agents. Revived Agents cannot both be used in the next upcoming battle, unless you’re forced to.",
+    desc: "Sacrifice 2 of your current remaining Agents in exchange for 2 eliminated Agents. Not just YOUR eliminated Agents, everyone's eliminated Agents. Revived Agents cannot both be used in the next upcoming battle, unless you’re forced to.",
   },
 ];

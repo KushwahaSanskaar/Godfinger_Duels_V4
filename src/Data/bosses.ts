@@ -12,8 +12,8 @@ export const BOSS_POOL: Boss[] = [
 // The boss that just appeared is less likely to come straight back: with 3 bosses that
 // is 20% for it and 40% for each of the others (20 / 40 / 40). On the first roll nothing
 // has appeared yet, so every boss is equally likely.
-export const LAST_BOSS_WEIGHT = 20;
-export const OTHER_BOSS_WEIGHT = 40;
+export const LAST_BOSS_WEIGHT = 2;
+export const OTHER_BOSS_WEIGHT = 9;
 
 export function pickBoss(
   pool: Boss[],
