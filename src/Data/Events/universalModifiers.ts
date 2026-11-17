@@ -9,6 +9,8 @@ export interface ModifierDef {
   // hidden through the boss roll and squad select and are revealed right before the
   // round starts.
   secret?: boolean;
+  // Only rolls once at least this many different Agents have been eliminated in total.
+  minEliminated?: number;
   desc: string;
   ready: boolean;
 }
@@ -17,7 +19,8 @@ export type ModifierId =
   | "tunnel-vision"
   | "puppeteer"
   | "preset-teams"
-  | "armory-swap";
+  | "armory-swap"
+  | "deja-vu";
 
 export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
   {
@@ -46,6 +49,15 @@ export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
     flair: "???",
     secret: true,
     desc: "After confirming both teams, swap teams with your opponent for this combat.",
+    ready: true,
+  },
+  {
+    id: "deja-vu",
+    title: "Deja Vu",
+    flair: "???",
+    secret: true,
+    minEliminated: 3,
+    desc: "Disregard the teams that were picked. A random team is rolled from the Agents that have been eliminated so far, and both players use it for this upcoming battle. The Agents you picked are still the ones on the line.",
     ready: true,
   },
 ];

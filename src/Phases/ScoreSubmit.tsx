@@ -7,6 +7,7 @@ import { TIMER_CONFIG } from "../Data/timers";
 import { roundLabel, OVERTIME_STREAK_TO_WIN } from "../Data/modes";
 import { displayForm, isSoulStone } from "../Data/morphItems";
 import { hasTime } from "../Logic/timeInput";
+import { VETO_CARD_ID } from "../Logic/squadRules";
 
 interface ScoreSubmitProps {
   pool: Agent[];
@@ -15,6 +16,7 @@ interface ScoreSubmitProps {
   totalRounds: number;
   swapped: boolean;
   preset: boolean;
+  veto: Record<PlayerId, boolean>; // who holds a Veto Card
   timePenalty: Record<PlayerId, number>;
   bossName: string | undefined;
   roundWins: Record<PlayerId, number>;
@@ -53,6 +55,7 @@ function PlayerPanel({
   pool,
   swapped,
   preset,
+  hasVeto,
   penalty,
   squad,
   morphs,
@@ -71,6 +74,7 @@ function PlayerPanel({
   roster: Agent[];
   swapped: boolean; // Armory Swap: this player is playing the OTHER squad
   preset: boolean; // Preset Teams: the removal pool is the squad they PICKED
+  hasVeto: boolean; // holds a Veto Card
   pool: Agent[]; // everything a squad can hold: the pool plus both rosters (Preset Teams, Armory Swap, Soul Stones)
   penalty: number; // seconds added to this player's time
   squad: string[];
@@ -97,6 +101,9 @@ function PlayerPanel({
   const removable = isRemoving
     ? roster.filter((a) => pendingRemoval.pool.includes(a.id))
     : [];
+  const usingVeto = isRemoving && removalSelection.includes(VETO_CARD_ID);
+  const removalReady =
+    isRemoving && (usingVeto || removalSelection.length === pendingRemoval.count);
 
   return (
     <section
@@ -110,6 +117,14 @@ function PlayerPanel({
           <div className="text-xs text-text-muted mt-1">
             {roster.length} AGENTS REMAINING
           </div>
+          {hasVeto && (
+            <div
+              className="mt-2 inline-block border border-event px-2 py-0.5 font-pixel text-[10px] text-event"
+              data-testid={`veto-pill-${player}`}
+            >
+              VETO CARD READY
+            </div>
+          )}
         </div>
         <div className="text-right">
           <div className="font-pixel text-[10px] text-text-muted">
@@ -195,6 +210,8 @@ function PlayerPanel({
             {((pendingRemoval.locked?.length ?? 0) > 0 ||
               pendingRemoval.pool.every(isSoulStone)) &&
               " — Soul Stones used this round are removed first"}
+            {pendingRemoval.veto &&
+              " — or play your Veto Card instead (nothing is removed)"}
           </p>
           <div className="grid grid-cols-6 gap-3 w-fit mx-auto mb-5">
             {removable.map((agent) => (
@@ -212,13 +229,22 @@ function PlayerPanel({
                 size={128}
               />
             ))}
+            {pendingRemoval.veto && (
+              <VetoTile
+                selected={removalSelection.includes(VETO_CARD_ID)}
+                border={border}
+                onClick={() => onToggleRemoval(VETO_CARD_ID)}
+              />
+            )}
           </div>
           <button
-            disabled={removalSelection.length !== pendingRemoval.count}
+            disabled={!removalReady}
             onClick={onConfirmRemoval}
-            className={`w-full py-4 font-pixel text-sm font-bold text-white ${background} ${removalSelection.length !== pendingRemoval.count ? "opacity-20 cursor-not-allowed" : "hover:brightness-110"}`}
+            className={`w-full py-4 font-pixel text-sm font-bold text-white ${background} ${!removalReady ? "opacity-20 cursor-not-allowed" : "hover:brightness-110"}`}
           >
-            CONFIRM REMOVAL ({removalSelection.length}/{pendingRemoval.count})
+            {usingVeto
+              ? "PLAY VETO CARD"
+              : `CONFIRM REMOVAL (${removalSelection.length}/${pendingRemoval.count})`}
           </button>
         </div>
       ) : !pendingRemoval ? (
@@ -305,6 +331,32 @@ function PlayerPanel({
   );
 }
 
+// The Veto Card sits on the removal screen like one more agent in the squad.
+function VetoTile({
+  selected,
+  border,
+  onClick,
+}: {
+  selected: boolean;
+  border: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={selected}
+      data-testid="veto-tile"
+      className={`flex h-[128px] w-[128px] flex-col items-center justify-center gap-2 bg-[#29251C] font-pixel text-event ${
+        selected ? `border-4 ${border}` : "border-4 border-event"
+      } ${selected ? "" : "opacity-80 hover:opacity-100"}`}
+    >
+      <span className="text-3xl">🛡</span>
+      <span className="text-xs tracking-widest">VETO</span>
+      <span className="text-xs tracking-widest">CARD</span>
+    </button>
+  );
+}
+
 export function ScoreSubmit({
   pool,
   banned,
@@ -312,6 +364,7 @@ export function ScoreSubmit({
   totalRounds,
   swapped,
   preset,
+  veto,
   bossName,
   roundWins,
   overtimeStreak,
@@ -408,6 +461,7 @@ export function ScoreSubmit({
             pool={squadLookup}
             swapped={swapped}
             preset={preset}
+            hasVeto={veto[player]}
             penalty={timePenalty[player]}
             squad={squads[player]}
             morphs={morphs[player]}

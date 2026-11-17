@@ -180,6 +180,9 @@ export function removalPlan(args: {
 
 // Removal costs `count` agents and the loser must still be able to field a full
 // squad afterwards, otherwise the match is over.
+// The Veto Card shows up next to the squad on the removal screen like an extra agent.
+export const VETO_CARD_ID = "veto-card";
+
 export function lossEndsMatch(
   rosterLength: number,
   minRoster: number,

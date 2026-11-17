@@ -25,6 +25,7 @@ import { BOSS_POOL, pickBoss, type Boss } from "../Data/bosses";
 import { COOLDOWN_ROUNDS } from "../Data/timers";
 import {
   REMOVAL_COUNT,
+  VETO_CARD_ID,
   autoFillSquad,
   buildTiers,
   isSquadPickAllowed,
@@ -36,12 +37,15 @@ import {
 import {
   anyRevivable,
   contractCandidates,
+  eliminatedIds,
+  frozenCandidates,
   kamikazeApplies,
   kamikazeCandidates,
   leaderOf,
   ownRevivable,
   rollAffixOffer,
   rollModifier,
+  rollDejaVuTeam,
   rollPresetTeam,
   rollTunnelVision,
   takeFromPool,
@@ -250,6 +254,11 @@ export function useGameState() {
     p1: {},
     p2: {},
   });
+  // Veto Card: holds until it is used instead of a loss's removal.
+  const [veto, setVeto] = useTracked<Record<PlayerId, boolean>>({
+    p1: false,
+    p2: false,
+  });
   // Overtime Contract: agents that are never on cooldown / fatigued again.
   const [immune, setImmune] = useTracked<Record<PlayerId, string[]>>({
     p1: [],
@@ -411,6 +420,8 @@ export function useGameState() {
     lastWinner: pendingRoundWinner,
     minRoster: cfg.minRoster,
     immune,
+    round: round - 1, // the affix screen runs after the round counter has moved on
+    veto,
   };
 
   const bannedGroups = useMemo(
@@ -814,6 +825,19 @@ export function useGameState() {
       setPresetTeam(team);
       setRoundStage("preset");
       return;
+    }
+    if (roundEffects.modifier?.id === "deja-vu") {
+      // same screen and rules as Preset Teams, but drawn from the eliminated agents
+      const team = memoRoll(
+        `dejavu:${round}:${roundAttempt}`,
+        { elim: eliminatedIds(eliminatedPool) },
+        () => rollDejaVuTeam(eliminatedPool),
+      );
+      if (team) {
+        setPresetTeam(team);
+        setRoundStage("preset");
+        return;
+      }
     }
     beginScore();
   }
@@ -1237,13 +1261,6 @@ export function useGameState() {
     finalizeRound(loser, t1, t2, "timeout");
   }
 
-  // Armory Swap squads can include agents the loser doesn't own, so that round lets
-  // the loser remove ANY agents from their roster. Preset Teams is not one of them:
-  // the squad the player picked beforehand is what is on the line.
-  function removalFromWholeRoster(): boolean {
-    return roundEffects.modifier?.id === "armory-swap";
-  }
-
   // Soul Stones stay visible on the removal screen, already selected and
   // locked. It counts toward the removal count, so the loser only chooses the
   // rest. Nothing leaves the roster until the removal is confirmed.
@@ -1257,11 +1274,13 @@ export function useGameState() {
     const { pool, locked } = removalPlan({
       squad: squads[loser],
       rosterIds: rosters[loser].map((a) => a.id),
-      wholeRoster: removalFromWholeRoster(),
+      // Preset Teams and Armory Swap alike: the loser pays with the squad they built
+      // (the agents they meant to fight with), never with whatever they ended up playing.
+      wholeRoster: false,
       count,
       isForced: isSoulStone, // Invitations become real agents once used
     });
-    return { player: loser, count, pool, locked };
+    return { player: loser, count, pool, locked, veto: veto[loser] };
   }
 
   // Remember who has played (Horizontal Investment): the squads the players picked.
@@ -1306,6 +1325,7 @@ export function useGameState() {
     // Removal takes `count` agents; a loser who couldn't field a full squad
     // afterwards has lost the match.
     if (
+      !veto[loser] && // a Veto Card can be used instead of the removal
       lossEndsMatch(
         rosters[loser].length,
         cfg.minRoster,
@@ -1340,6 +1360,7 @@ export function useGameState() {
     setPendingRoundWinner(null); // nobody won this round
 
     if (
+      !veto.p1 &&
       lossEndsMatch(rosters.p1.length, cfg.minRoster, removalCountFor("p1"))
     ) {
       setWinner("p2");
@@ -1347,6 +1368,7 @@ export function useGameState() {
       return;
     }
     if (
+      !veto.p2 &&
       lossEndsMatch(rosters.p2.length, cfg.minRoster, removalCountFor("p2"))
     ) {
       setWinner("p1");
@@ -1395,6 +1417,7 @@ export function useGameState() {
     projected: {
       rosters: Record<PlayerId, Agent[]>;
       eliminatedPool: Record<PlayerId, Agent[]>;
+      veto?: Record<PlayerId, boolean>;
     },
   ) {
     if (roundWinner === null) {
@@ -1455,46 +1478,69 @@ export function useGameState() {
       lastWinner: roundWinner,
       minRoster: cfg.minRoster,
       immune,
+      round, // the round that just ended (the counter moves on after this call)
+      veto: projected.veto ?? veto,
     });
   }
 
   function toggleRemoval(agentId: string) {
-    if (pendingRemoval?.locked?.includes(agentId)) return; // Soul Stones used this round are always removed
-    setRemovalSelection((sel) =>
-      sel.includes(agentId)
-        ? sel.filter((id) => id !== agentId)
-        : [...sel, agentId],
-    );
+    const locked = pendingRemoval?.locked ?? [];
+    if (agentId === VETO_CARD_ID) {
+      // The Veto Card stands in for the whole removal: it replaces any picks, and
+      // clicking it again goes back to the forced ones.
+      if (!pendingRemoval?.veto) return;
+      setRemovalSelection((sel) =>
+        sel.includes(VETO_CARD_ID) ? locked : [VETO_CARD_ID],
+      );
+      return;
+    }
+    if (locked.includes(agentId)) return; // Soul Stones used this round are always removed
+    setRemovalSelection((sel) => {
+      const base = sel.includes(VETO_CARD_ID) ? locked : sel; // picking an agent drops the card
+      return base.includes(agentId)
+        ? base.filter((id) => id !== agentId)
+        : [...base, agentId];
+    });
   }
 
   function confirmRemoval() {
     const current = pendingRemovals[0];
-    if (!current || removalSelection.length !== current.count) return;
-    if (!(current.locked ?? []).every((id) => removalSelection.includes(id)))
-      return;
+    if (!current) return;
+    // Using the Veto Card means nothing is eliminated at all (Soul Stones included).
+    const usedVeto = !!current.veto && removalSelection.includes(VETO_CARD_ID);
+    if (!usedVeto) {
+      if (removalSelection.length !== current.count) return;
+      if (!(current.locked ?? []).every((id) => removalSelection.includes(id)))
+        return;
+    }
     const { player } = current;
+    const removedIds = usedVeto ? [] : removalSelection;
 
     const removedAgents = rosters[player].filter((a) =>
-      removalSelection.includes(a.id),
+      removedIds.includes(a.id),
     );
     const nextRosters = {
       ...rosters,
-      [player]: rosters[player].filter((a) => !removalSelection.includes(a.id)),
+      [player]: rosters[player].filter((a) => !removedIds.includes(a.id)),
     };
     const nextPool = {
       ...eliminatedPool,
       [player]: [
         ...eliminatedPool[player],
-        ...removedAgents.filter((a) => !isMorphItem(a.id)),
+        ...removedAgents.filter((a) => !isSoulStone(a.id)),
       ],
     };
+    const nextVeto = usedVeto ? { ...veto, [player]: false } : veto;
     setRosters(nextRosters);
     setEliminatedPool(nextPool);
-    setLossPenalty((l) => ({ ...l, [player]: 0 })); // the heavier loss has been paid
+    setVeto(nextVeto);
+    if (!usedVeto) {
+      setLossPenalty((l) => ({ ...l, [player]: 0 })); // the heavier loss has been paid
+    }
 
     const allEliminated: Record<PlayerId, string[]> = {
       ...eliminatedThisRound,
-      [player]: [...eliminatedThisRound[player], ...removalSelection],
+      [player]: [...eliminatedThisRound[player], ...removedIds],
     };
     setEliminatedThisRound(allEliminated);
 
@@ -1506,6 +1552,7 @@ export function useGameState() {
       finishRoundAndAdvance(allEliminated, pendingRoundWinner, {
         rosters: nextRosters,
         eliminatedPool: nextPool,
+        veto: nextVeto,
       });
     }
   }
@@ -1526,8 +1573,11 @@ export function useGameState() {
     setInterludeQueue(rest);
 
     if (head === "modifier") {
-      const roll = memoRoll(`modroll:${round}:${queue.join("+")}`, null, () =>
-        rollModifier(),
+      const elim = eliminatedIds(ctx?.eliminatedPool ?? eliminatedPool);
+      const roll = memoRoll(
+        `modroll:${round}:${queue.join("+")}`,
+        { elim },
+        () => rollModifier(Math.random, elim),
       );
       if (!roll) {
         startInterlude(rest, ctx);
@@ -1555,6 +1605,7 @@ export function useGameState() {
               last: ctx.lastSquads,
               winner: ctx.lastWinner,
               immune: ctx.immune,
+              ended: ctx.round,
             },
             () => rollAffixOffer(ctx, leader, Math.random, exclude),
           )
@@ -1579,7 +1630,11 @@ export function useGameState() {
     if (!claimTurn(`affix-choice:${round}`)) return; // first click wins, even in the same render
     setAffixChoice({
       def,
-      target: kind === "positive" ? affixOffer.chooser : affixOffer.leader,
+      // Frozen Assets is a positive affix, but it lands on the leading player
+      target:
+        kind === "positive" && !def.hitsOpponent
+          ? affixOffer.chooser
+          : affixOffer.leader,
     });
     setAffixSelection([]);
     setNecroStage("sacrifice");
@@ -1657,6 +1712,17 @@ export function useGameState() {
           max: necroSacrificed.length,
           label: `CHOOSE ${necroSacrificed.length} ELIMINATED AGENT${necroSacrificed.length > 1 ? "S" : ""} TO REVIVE`,
         };
+      }
+      case "frozen-assets": {
+        const c = frozenCandidates(interludeCtx, target, Object.keys(fatigue[target]));
+        return c.length
+          ? {
+              candidates: c,
+              min: 1,
+              max: 1,
+              label: `CHOOSE 1 AGENT FROM ${displayName(target).toUpperCase()}’S ROSTER TO FREEZE`,
+            }
+          : wasted("NO EFFECT — there is nobody left to freeze.");
       }
       default:
         return null;
@@ -1759,23 +1825,47 @@ export function useGameState() {
         }));
         break;
       case "overworked": {
-        const victim = memoRoll(
+        const victims = memoRoll(
           `overworked:${round}:${target}`,
           { roster: idsOf(rosters[target]), immune: immune[target] },
-          () =>
-            randomFrom(
-              rosters[target].filter((a) => !immune[target].includes(a.id)),
-            ),
+          () => {
+            const left = rosters[target].filter(
+              (a) => !immune[target].includes(a.id),
+            );
+            const out: Agent[] = [];
+            while (out.length < 2 && left.length) {
+              out.push(...left.splice(Math.floor(Math.random() * left.length), 1));
+            }
+            return out;
+          },
         );
-        if (victim) {
+        if (victims.length) {
           setFatigue((f) => ({
             ...f,
-            [target]: { ...f[target], [victim.id]: 2 },
+            [target]: {
+              ...f[target],
+              ...Object.fromEntries(victims.map((v) => [v.id, 2])),
+            },
           }));
-          note = `${victim.name} is fatigued for 2 rounds.`;
+          note = `${victims.map((v) => v.name).join(" and ")} ${victims.length > 1 ? "are" : "is"} fatigued for 2 rounds.`;
         }
         break;
       }
+      case "frozen-assets": {
+        const frozen = rosters[target].find((a) => a.id === sel[0]);
+        if (!spec?.noEffect && frozen) {
+          setFatigue((f) => ({
+            ...f,
+            [target]: { ...f[target], [frozen.id]: 2 },
+          }));
+          note = `${frozen.name} is frozen for 2 rounds.`;
+        } else note = "No effect.";
+        break;
+      }
+      case "veto-card":
+        setVeto((v) => ({ ...v, [target]: true }));
+        note = "Veto Card ready: use it instead of removing agents on your next loss.";
+        break;
       case "kamikaze":
         if (!spec?.noEffect && sel.length === 2) {
           setRosters((r) => ({
@@ -1923,6 +2013,7 @@ export function useGameState() {
     setRoundAttempt(0);
     setEliminatedPool({ p1: [], p2: [] });
     setFatigue({ p1: {}, p2: {} });
+    setVeto({ p1: false, p2: false });
     setImmune({ p1: [], p2: [] });
     setPlayedHistory({ p1: [], p2: [] });
     setLossPenalty({ p1: 0, p2: 0 });
@@ -2101,6 +2192,7 @@ export function useGameState() {
     morphChoices,
     battleMorphs,
     presetTeam,
+    veto,
     acknowledgePreset,
     morphOptionsFor,
     chooseMorph,

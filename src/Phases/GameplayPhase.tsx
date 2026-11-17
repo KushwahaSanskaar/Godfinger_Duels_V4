@@ -85,6 +85,7 @@ interface GameplayPhaseProps {
   onAcknowledgeModifier: () => void;
   onAcknowledgeReveal: () => void;
   presetTeam: string[] | null;
+  veto: Record<PlayerId, boolean>;
   onAcknowledgePreset: () => void;
 }
 
@@ -141,6 +142,7 @@ export function GameplayPhase({
   onAcknowledgeModifier,
   onAcknowledgeReveal,
   presetTeam,
+  veto,
   onAcknowledgePreset,
 }: GameplayPhaseProps) {
   // The screens that come BEFORE the boss roll.
@@ -187,6 +189,12 @@ export function GameplayPhase({
     return (
       <PresetScreen
         team={presetTeam}
+        title={effects.modifier?.id === "deja-vu" ? "DEJA VU" : "PRESET TEAM"}
+        subtitle={
+          effects.modifier?.id === "deja-vu"
+            ? "A TEAM FROM THE ELIMINATED AGENTS"
+            : "BOTH PLAYERS FIGHT WITH THIS TEAM"
+        }
         squads={squads}
         lookup={[...rosters.p1, ...rosters.p2, ...pool]}
         morphs={morphChoices}
@@ -266,7 +274,12 @@ export function GameplayPhase({
         squads={battleSquads}
         morphs={battleMorphs}
         swapped={effects.modifier?.id === "armory-swap"}
-        preset={effects.modifier?.id === "preset-teams"}
+        preset={
+          effects.modifier?.id === "preset-teams" ||
+          effects.modifier?.id === "deja-vu" ||
+          effects.modifier?.id === "armory-swap"
+        }
+        veto={veto}
         timeInputs={timeInputs}
         submitted={submitted}
         onTimeChange={onTimeChange}

@@ -3,6 +3,8 @@ import { AgentCard } from "../Components/AgentCard";
 
 interface PresetScreenProps {
   team: string[]; // the rolled team both players play
+  title: string;
+  subtitle: string;
   squads: Record<PlayerId, string[]>; // what each player picked (still at stake)
   lookup: Agent[]; // pool plus both rosters
   morphs: Record<PlayerId, Record<string, string>>;
@@ -14,6 +16,8 @@ interface PresetScreenProps {
 // players fight with; the squads they picked first are what is lost if they lose.
 export function PresetScreen({
   team,
+  title,
+  subtitle,
   squads,
   lookup,
   morphs,
@@ -25,11 +29,11 @@ export function PresetScreen({
   return (
     <div className="w-full flex flex-col items-center gap-6 py-3">
       <span className="font-pixel text-sm text-event tracking-widest">
-        ◆ PRESET TEAM ◆
+        ◆ {title} ◆
       </span>
       <div className="w-full max-w-[900px] border-4 border-event bg-[#29251C] p-8 flex flex-col items-center gap-5">
         <h3 className="font-pixel text-2xl text-event">
-          BOTH PLAYERS FIGHT WITH THIS TEAM
+          {subtitle}
         </h3>
         <div className="flex flex-wrap justify-center gap-4" data-testid="preset-team">
           {team.map((id) => {

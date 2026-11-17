@@ -198,6 +198,7 @@ export default function App() {
               onAcknowledgeModifier={game.acknowledgeModifier}
               onAcknowledgeReveal={game.acknowledgeReveal}
               presetTeam={game.presetTeam}
+              veto={game.veto}
               onAcknowledgePreset={game.acknowledgePreset}
               squadPlan={game.squadPlan}
               battleSquads={game.battleSquads}

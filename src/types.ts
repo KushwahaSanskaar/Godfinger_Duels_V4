@@ -87,6 +87,7 @@ export interface PendingRemoval {
   count: number;
   pool: string[]; // agent ids eligible for removal — that round's squad
   locked?: string[]; // agent ids that are always removed (Soul Stones; an used Invitation is a normal agent)
+  veto?: boolean; // this player holds a Veto Card: they may use it instead of removing agents
 }
 
 export type Mode = keyof typeof MODES;

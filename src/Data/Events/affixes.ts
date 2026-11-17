@@ -12,7 +12,9 @@ export type AffixId =
   | "emergency-reinforcements"
   | "soul-stone-affix"
   | "soul-stone-plus-affix"
-  | "spell-of-necromancy";
+  | "spell-of-necromancy"
+  | "frozen-assets"
+  | "veto-card";
 
 export interface AffixDef {
   id: AffixId;
@@ -20,6 +22,7 @@ export interface AffixDef {
   desc: string;
   polarity: "positive" | "negative";
   ready: boolean;
+  hitsOpponent?: boolean; // a positive affix that is aimed at the leading player
 }
 
 export const AFFIXES: AffixDef[] = [
@@ -42,21 +45,21 @@ export const AFFIXES: AffixDef[] = [
     title: "Overworked",
     polarity: "negative",
     ready: true,
-    desc: "For the next 2 rounds, randomly have 1 Agent be fatigued in your total agent pool.",
+    desc: "For the next 2 rounds, randomly have 2 Agents be fatigued in your total agent pool.",
   },
   {
     id: "mind-control",
     title: "Mind Control",
     polarity: "negative",
     ready: true,
-    desc: "After the currently winning player locks in Agents 1 and 2, the losing player chooses their opponent's 3rd Agent.",
+    desc: "After the currently winning player locks in Agents 1 and 2, the losing player chooses their opponent’s 3rd Agent.",
   },
   {
     id: "kamikaze",
     title: "Kamikaze",
     polarity: "negative",
     ready: true,
-    desc: "For one round, make your opponent eliminate 2 of the 3 Agents that they used last round.",
+    desc: "For one round, you’re forced to also eliminate 2 of the 3 Agents that you used last round.",
   },
   {
     id: "overtime-contract",
@@ -91,6 +94,21 @@ export const AFFIXES: AffixDef[] = [
     title: "Spell of Necromancy",
     polarity: "positive",
     ready: true,
-    desc: "Sacrifice 2 of your current remaining Agents in exchange for 2 eliminated Agents. Not just YOUR eliminated Agents, everyone's eliminated Agents. Revived Agents cannot both be used in the next upcoming battle, unless you’re forced to.",
+    desc: "Sacrifice 2 of your current remaining Agents in exchange for 2 eliminated Agents. Not just YOUR eliminated Agents, everyone’s eliminated Agents. Revived Agents cannot both be used in the next upcoming battle, unless you’re forced to.",
+  },
+  {
+    id: "frozen-assets",
+    title: "Frozen Assets",
+    polarity: "positive",
+    ready: true,
+    hitsOpponent: true,
+    desc: "Choose 1 Agent in your opponent’s roster. They cannot be selected for the next 2 rounds.",
+  },
+  {
+    id: "veto-card",
+    title: "Veto Card",
+    polarity: "positive",
+    ready: true,
+    desc: "Stays active until used. The next time you lose a round, use the card instead of eliminating 2 Agents.",
   },
 ];

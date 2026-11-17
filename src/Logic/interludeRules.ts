@@ -33,7 +33,13 @@ export interface InterludeContext {
   lastWinner: PlayerId | null;
   minRoster: number;
   immune?: Record<PlayerId, string[]>; // already have an Overtime Contract
+  round: number; // the round that just ended
+  veto?: Record<PlayerId, boolean>; // holds a Veto Card
 }
+
+// Spell of Necromancy only starts coming after the 2nd round: on the 1st loss there is
+// nothing worth reviving, and the loser would just take back what they eliminated.
+export const NECROMANCY_FIRST_ROUND = 2;
 
 function uniqueById(list: Agent[]): Agent[] {
   const seen = new Set<string>();
@@ -97,6 +103,20 @@ export function kamikazeApplies(
   );
 }
 
+// Agents of `target` that Frozen Assets may freeze: real agents that are not already
+// held back by fatigue/freezing and don't have an Overtime Contract.
+export function frozenCandidates(
+  ctx: InterludeContext,
+  target: PlayerId,
+  alreadyHeld: string[] = [],
+): Agent[] {
+  const immune = ctx.immune?.[target] ?? [];
+  return ctx.rosters[target].filter(
+    (a) =>
+      !isMorphItem(a.id) && !immune.includes(a.id) && !alreadyHeld.includes(a.id),
+  );
+}
+
 // Can this POSITIVE affix do anything for `chooser`?
 export function positiveAvailable(
   def: AffixDef,
@@ -108,12 +128,19 @@ export function positiveAvailable(
       return contractCandidates(ctx, chooser).length >= 1;
     case "emergency-reinforcements":
       return ownRevivable(ctx, chooser).length >= 1;
+    case "frozen-assets":
+      return frozenCandidates(ctx, otherPlayer(chooser)).length >= 1;
+    case "veto-card":
+      return !ctx.veto?.[chooser]; // one card at a time
     case "soul-stone-affix":
       return !ctx.rosters[chooser].some((a) => a.id === SOUL_ID);
     case "soul-stone-plus-affix":
       return !ctx.rosters[chooser].some((a) => a.id === SOUL_PLUS_ID);
     case "spell-of-necromancy":
-      return anyRevivable(ctx, chooser).length >= 1;
+      return (
+        ctx.round >= NECROMANCY_FIRST_ROUND &&
+        anyRevivable(ctx, chooser).length >= 1
+      );
     default:
       return true;
   }
@@ -154,13 +181,35 @@ export function rollAffixOffer(
   return { positive, negative, leader, chooser };
 }
 
+// Different real agents that have been eliminated from either roster.
+export function eliminatedIds(pool: Record<PlayerId, Agent[]>): string[] {
+  return Array.from(
+    new Set(
+      [...pool.p1, ...pool.p2].filter((a) => !isMorphItem(a.id)).map((a) => a.id),
+    ),
+  );
+}
+
 export function rollModifier(
   rng: () => number = Math.random,
+  eliminated: string[] = [],
 ): ModifierDef | null {
   return pickOne(
-    UNIVERSAL_MODIFIERS.filter((m) => m.ready),
+    UNIVERSAL_MODIFIERS.filter(
+      (m) => m.ready && (m.minEliminated ?? 0) <= eliminated.length,
+    ),
     rng,
   );
+}
+
+// Deja Vu: a random team of 3 from everything that has been eliminated so far.
+// Both players play it. null when there aren't 3 different agents to draw from.
+export function rollDejaVuTeam(
+  pool: Record<PlayerId, Agent[]>,
+  rng: () => number = Math.random,
+): string[] | null {
+  const ids = eliminatedIds(pool);
+  return ids.length >= 3 ? sample(ids, 3, rng) : null;
 }
 
 // ---------- Preset Teams ----------
