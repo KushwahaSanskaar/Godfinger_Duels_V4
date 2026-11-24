@@ -18,6 +18,7 @@ export function CoinToss({
 }: CoinTossProps) {
   const [flipping, setFlipping] = useState(false);
   const [settled, setSettled] = useState(false);
+  const [angle, setAngle] = useState(0);
 
   useEffect(() => {
     if (coinResult && !settled) {
@@ -35,28 +36,34 @@ export function CoinToss({
     }
   }, [coinResult]);
 
-  const [angle, setAngle] = useState(0);
-
+  const canToss = !coinResult;
   const handleToss = () => {
+    if (!canToss) return;
     setSettled(false);
     onToss();
   };
 
   return (
-    <div className="flex flex-col items-center gap-8 py-12">
+    <div className="flex flex-col items-center justify-center gap-8 min-h-[calc(100vh-8rem)]">
       <h2
-        className="font-pixel font-bold text-4xl text-white tracking-widest leading-none"
-        style={{
-          textShadow:
-            "0.3rem 0 0 #1748A1, 0 0.3rem 0 #1748A1, 0.3rem 0.3rem 0 #1748A1",
-          WebkitTextStroke: "2px #77B2FF",
-        }}
+        className="text-trim font-pixel font-bold text-5xl text-bright tracking-tighter leading-none border-y-4 border-event bg-plate px-10 py-4"
       >
         COIN TOSS
       </h2>
 
       {/* Coin */}
-      <div style={{ perspective: "600px" }}>
+      <button
+        type="button"
+        onClick={handleToss}
+        disabled={!canToss}
+        aria-label="Toss the coin"
+        className={`bg-transparent p-0 border-0 outline-none ${
+          canToss
+            ? "cursor-pointer transition-transform hover:scale-105 active:scale-95 focus-visible:scale-105"
+            : "cursor-default"
+        }`}
+        style={{ perspective: "600px" }}
+      >
         <div
           style={{
             width: "160px",
@@ -71,58 +78,54 @@ export function CoinToss({
         >
           {/* Front face — P1 */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center border-4 border-event"
+            className="absolute inset-0 flex flex-col items-center justify-center border-4 border-event-light"
             style={{
               backfaceVisibility: "hidden",
-              backgroundColor: "#facd64",
+              backgroundColor: "#F5C518",
               borderRadius: "50%",
             }}
           >
-            <span
-              className="font-pixel font-bold text-white text-2xl"
-              style={{ textShadow: "2px 2px 0 #b8960f" }}
-            >
-              P1
-            </span>
-            <span className="font-sand text-white text-sm mt-1 opacity-80">
-              HEADS
-            </span>
+            <div className="absolute inset-[10px] flex flex-col items-center justify-center rounded-full border-2 border-event-light bg-plate">
+              <span className="text-trim font-pixel font-bold text-event text-3xl">
+                P1
+              </span>
+              <span className="text-trim font-pixel text-event-light text-[10px] tracking-widest mt-3">
+                HEADS
+              </span>
+            </div>
           </div>
 
           {/* Back face — P2 */}
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center border-4 border-event"
+            className="absolute inset-0 flex flex-col items-center justify-center border-4 border-event-light"
             style={{
               backfaceVisibility: "hidden",
-              backgroundColor: "#FACD64",
+              backgroundColor: "#F5C518",
               borderRadius: "50%",
               transform: "rotateY(180deg)",
             }}
           >
-            <span
-              className="font-pixel font-bold text-white text-2xl"
-              style={{ textShadow: "2px 2px 0 #5a1520" }}
-            >
-              P2
-            </span>
-            <span className="font-sand text-white text-sm mt-1 opacity-80">
-              TAILS
-            </span>
+            <div className="absolute inset-[10px] flex flex-col items-center justify-center rounded-full border-2 border-event-light bg-plate">
+              <span className="text-trim font-pixel font-bold text-event text-3xl">
+                P2
+              </span>
+              <span className="text-trim font-pixel text-event-light text-[10px] tracking-widest mt-3">
+                TAILS
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </button>
 
       {/* Result + actions */}
+      {<div className="flex h-32 flex-col items-center justify-start">
       {!coinResult ? (
-        <button
-          onClick={handleToss}
-          className="px-12 py-3 bg-accent text-white font-pixel font-bold text-xl tracking-widest hover:opacity-80 transition-opacity"
-        >
-          TOSS
-        </button>
+        <p className="text-trim font-pixel text-sm tracking-widest text-text-primary">
+          CLICK THE COIN TO TOSS
+        </p>
       ) : settled ? (
         <div className="flex flex-col items-center gap-4">
-          <p className="font-sand text-text-primary text-lg">
+          <p className="font-sans text-text-primary text-2xl">
             <span
               className={
                 priority === "p1" ? "text-p1 font-bold" : "text-p2 font-bold"
@@ -134,12 +137,13 @@ export function CoinToss({
           </p>
           <button
             onClick={onConfirm}
-            className="px-12 py-3 bg-accent text-white font-pixel font-bold text-xl tracking-widest hover:opacity-80 transition-opacity"
+            className="text-trim px-12 py-4 border-2 border-event bg-plate text-event font-pixel font-bold text-xl tracking-widest hover:bg-event hover:text-ink transition-colors"
           >
             BEGIN BAN PHASE
           </button>
         </div>
       ) : null}
+      </div>}
     </div>
   );
 }

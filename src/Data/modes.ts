@@ -2,9 +2,9 @@ import type { ClassGroup, ModeConfig } from "../types";
 
 export const CLASS_GROUPS: ClassGroup[] = [
   { label: "Attack", specialties: ["Attack"] },
-  { label: "Stun", specialties: ["Stun"] },
   { label: "Anomaly", specialties: ["Anomaly"] },
   { label: "Rupture / Armorer", specialties: ["Rupture", "Armorer"] },
+  { label: "Stun", specialties: ["Stun"] },
   { label: "Support / Defense", specialties: ["Support", "Defense"] },
 ];
 

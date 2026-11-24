@@ -1,6 +1,7 @@
 import type { Agent, Mode, PlayerId } from "../types";
 import { MODES } from "../Data/modes";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { Wipe } from "../Components/Wipe";
 
 
 function getGlobalPickNumbers(mode: Mode, player: PlayerId): number[] {
@@ -24,7 +25,7 @@ function useNewlyFilledSlots(roster: Agent[]): {
   const [animating, setAnimating] = useState<Set<number>>(new Set());
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prev = prevLengthRef.current;
     const curr = roster.length;
     if (curr > prev) {
@@ -56,6 +57,8 @@ interface SlotProps {
   animating?: boolean;
   revealed?: boolean;
   pendingAgent: Agent | null;
+  nextUp: boolean;
+  picking: boolean;
 }
 
 function Slot({
@@ -66,43 +69,38 @@ function Slot({
   animating,
   revealed,
   pendingAgent,
+  nextUp,
+  picking,
 }: SlotProps) {
   const isP1 = player === "p1";
   const filled = agent !== null;
   const showFilled = filled && (!animating || revealed);
-  const showPending = !showFilled && pendingAgent != null;
+  const placeholder = pendingAgent ?? agent;
+  const showPending = !showFilled && placeholder != null;
+  const peeking = picking || (filled && animating);
   const slotNumber = String(index + 1).padStart(2, "0");
   const pickNumber = String(globalPickNumber).padStart(2, "0");
   const accentColor = isP1 ? "#3A8EF6" : "#E63946";
   const borderColor = isP1 ? "border-p1" : "border-p2";
+  const stateLabel =
+    showFilled || showPending
+      ? null
+      : picking
+        ? "PICKING"
+        : nextUp
+          ? "NEXT UP"
+          : null;
 
   return (
     <div
-      className={`relative flex items-stretch h-[clamp(48px,3.65vw,140px)] overflow-hidden ${filled ? `border-2 ${borderColor}` : "opacity-40"}`}
+      className={`relative flex items-stretch h-[clamp(48px,3.6vw,136px)] overflow-hidden transition-transform duration-[250ms] ease-out ${peeking ? (isP1 ? "translate-x-3" : "-translate-x-3") : ""} ${showFilled ? `border-2 ${borderColor}` : picking ? "border-2 border-event" : filled ? "border-2 border-transparent" : nextUp ? "" : "opacity-40"}`}
     >
       <div className="absolute inset-0 bg-unavailable" />
 
-      {animating && (
-        <div
-          className={`absolute inset-0 z-20 overflow-visible ${isP1 ? "wipe-overlay-p1" : "wipe-overlay-p2"}`}
-          style={{ backgroundColor: accentColor }}
-        >
-          {[0, 1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="absolute top-0 bottom-0"
-              style={{
-                width: "4px",
-                [isP1 ? "right" : "left"]: `-${i * 8}px`,
-                backgroundColor: accentColor,
-              }}
-            />
-          ))}
-        </div>
-      )}
+      {animating && <Wipe tone={isP1 ? "text-p1" : "text-p2"} duration={800} reverse={!isP1} />}
 
       <span
-        className={`relative z-10 text-[clamp(11px,0.85vw,32px)] text-text-muted flex-shrink-0 w-[clamp(20px,1.5vw,58px)] flex items-center font-sans ${isP1 ? "justify-start pl-[clamp(3px,0.4vw,16px)]" : "justify-end pr-[clamp(3px,0.4vw,16px)] order-last"}`}
+        className={`text-trim relative z-10 text-[clamp(11px,0.85vw,32px)] text-text-muted flex-shrink-0 w-[clamp(20px,1.5vw,58px)] flex items-center font-sans ${isP1 ? "justify-start pl-[clamp(3px,0.4vw,16px)]" : "justify-end pr-[clamp(3px,0.4vw,16px)] order-last"}`}
       >
         {slotNumber}
       </span>
@@ -110,18 +108,26 @@ function Slot({
       <div
         className={`relative z-10 flex-1 flex flex-col justify-center px-[clamp(4px,0.55vw,22px)] ${isP1 ? "text-left" : "text-right"}`}
       >
-        <p
-          className={`${showFilled || showPending ? "text-[clamp(10px,0.78vw,30px)]" : "text-[clamp(12px,0.95vw,36px)]"} font-bold leading-none ${showPending && !showFilled ? "text-text-muted" : filled ? "text-text-primary" : "text-text-muted"} font-sans`}
-        >
-          {showFilled
-            ? agent!.name
-            : showPending
-              ? pendingAgent!.name
-              : "Empty Slot"}
-        </p>
+        {stateLabel ? (
+          <span
+            className={`text-trim font-pixel tracking-wider px-[clamp(5px,.5vw,14px)] py-[clamp(3px,.3vw,8px)] text-[clamp(9px,.7vw,26px)] ${isP1 ? "self-start" : "self-end"} ${picking ? "border-2 border-event bg-event text-ink" : "border-2 border-event bg-event/10 text-event"}`}
+          >
+            {stateLabel}
+          </span>
+        ) : (
+          <p
+            className={`text-trim ${showFilled || showPending ? "text-[clamp(10px,0.78vw,30px)]" : "text-[clamp(12px,0.95vw,36px)]"} font-bold leading-none ${showPending && !showFilled ? "text-text-muted" : filled ? "text-text-primary" : "text-text-muted"} font-sans`}
+          >
+            {showFilled
+              ? agent!.name
+              : showPending
+                ? placeholder!.name
+                : (player === "p1" ? "\\".repeat(10) : "/".repeat(10))}
+          </p>
+        )}
         {(showFilled || showPending) && (
-          <p className="text-[clamp(9px,0.67vw,26px)] text-text-muted leading-none mt-[clamp(3px,0.45vw,16px)]">
-            {showFilled ? agent!.specialty : pendingAgent!.specialty}
+          <p className="text-trim text-[clamp(9px,0.67vw,26px)] text-text-muted leading-none mt-[clamp(3px,0.45vw,16px)]">
+            {showFilled ? agent!.specialty : placeholder!.specialty}
           </p>
         )}
       </div>
@@ -143,13 +149,13 @@ function Slot({
           />
         ) : showPending ? (
           <img
-            src={`/agents/${pendingAgent!.art ?? pendingAgent!.id}.webp`}
-            alt={pendingAgent!.name}
+            src={`/agents/${placeholder!.art ?? placeholder!.id}.webp`}
+            alt={placeholder!.name}
             className="w-full h-full object-cover object-center scale-150 grayscale opacity-50"
           />
         ) : (
           <span
-            className="absolute inset-0 flex items-center justify-center text-[clamp(38px,3.75vw,144px)] leading-none font-black text-text-primary"
+            className="text-trim absolute inset-0 flex items-center justify-center text-[clamp(38px,3.75vw,144px)] leading-none font-black text-text-primary"
             style={{ fontFamily: "Lexend, sans-serif" }}
           >
             {pickNumber}
@@ -167,6 +173,8 @@ interface PlayerListProps {
   picksPerPlayer: number;
   displayName: string;
   pendingAgent: Agent | null;
+  nextUpIndex: number | null;
+  pickingIndex: number | null;
 }
 
 function PlayerList({
@@ -176,6 +184,8 @@ function PlayerList({
   picksPerPlayer,
   displayName,
   pendingAgent,
+  nextUpIndex,
+  pickingIndex,
 }: PlayerListProps) {
   const isP1 = player === "p1";
   const accentColor = isP1 ? "#3A8EF6" : "#E63946";
@@ -191,26 +201,19 @@ function PlayerList({
   return (
     <div className="flex flex-col gap-[clamp(4px,0.3vw,12px)]">
       <div
-        className="relative h-[clamp(26px,1.7vw,66px)] flex items-center overflow-hidden mb-[clamp(4px,0.3vw,12px)]"
+        className={`relative mb-[clamp(4px,0.3vw,12px)] flex h-[clamp(30px,2vw,76px)] items-center justify-between overflow-hidden px-[clamp(10px,0.9vw,34px)] ${isP1 ? "pr-[clamp(20px,1.7vw,64px)]" : "flex-row-reverse pl-[clamp(20px,1.7vw,64px)]"}`}
         style={{
-          backgroundColor: accentColor + "33",
+          backgroundColor: accentColor,
           clipPath: isP1
             ? "polygon(0% 0%, 92.5% 0%, 100% 100%, 0% 100%)"
             : "polygon(7.5% 0%, 100% 0%, 100% 100%, 0% 100%)",
         }}
       >
-        <div
-          className="absolute top-0 bottom-0 w-1 flex-shrink-0"
-          style={{
-            backgroundColor: accentColor,
-            left: isP1 ? 0 : "auto",
-            right: isP1 ? "auto" : 0,
-          }}
-        />
-        <span
-          className={`relative z-10 text-[clamp(10px,0.73vw,28px)] font-pixel ${textColor} w-full px-[clamp(8px,0.7vw,28px)] ${isP1 ? "text-left" : "text-right"}`}
-        >
+        <span className="text-trim font-sans font-bold text-ink text-[clamp(12px,0.95vw,36px)] tracking-tighest">
           {displayName.toUpperCase()}
+        </span>
+        <span className="text-trim font-pixel text-ink text-[clamp(10px,0.75vw,28px)]">
+          {String(roster.length).padStart(2, "0")}/{picksPerPlayer}
         </span>
       </div>
 
@@ -224,6 +227,8 @@ function PlayerList({
           revealed={newlyRevealed.has(i)}
           player={player}
           pendingAgent={i === nextEmptyIndex ? pendingAgent : null}
+          nextUp={i === nextUpIndex}
+          picking={i === pickingIndex}
         />
       ))}
     </div>
@@ -237,6 +242,8 @@ export function PickList({
   displayName,
   player,
   pendingAgent,
+  nextUpIndex,
+  pickingIndex,
 }: {
   rosters: Record<PlayerId, Agent[]>;
   mode: Mode;
@@ -244,6 +251,8 @@ export function PickList({
   displayName: (p: PlayerId | null) => string;
   player: PlayerId;
   pendingAgent?: Agent | null;
+  nextUpIndex: number | null;
+  pickingIndex: number | null;
 }) {
   const picks = getGlobalPickNumbers(mode, player);
 
@@ -255,6 +264,8 @@ export function PickList({
       picksPerPlayer={picksPerPlayer}
       displayName={displayName(player)}
       pendingAgent={pendingAgent ?? null}
+      nextUpIndex={nextUpIndex}
+      pickingIndex={pickingIndex}
     />
   );
 }

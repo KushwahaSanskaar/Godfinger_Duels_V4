@@ -20,7 +20,7 @@ export type DraftEventId =
   | "stun-invitation"
   | "stun-invitation-plus"
   | "gatekeeper"
-  | "forced-random-agent"
+  | "wild-draft"
   | "remote-control";
 
 export interface DraftEventDef {
@@ -43,25 +43,25 @@ export const DRAFT_EVENTS: DraftEventDef[] = [
     id: "ban-wave",
     title: "Ban Wave",
     weight: 5,
-    desc: "Players will start another ban wave of 1 Agent per category.",
+    desc: "Initiate a ban wave: ban 1 Agent from each category.",
   },
   {
     id: "ban-2x",
     title: "Ban 2x",
     weight: 10,
-    desc: "Players will each ban another 2 Agents.",
+    desc: "Both players ban 2 additional Agents.",
   },
   {
     id: "ban-1x",
     title: "Ban 1x",
     weight: 14,
-    desc: "Players will each ban another Agent.",
+    desc: "Both players ban 1 additional Agent.",
   },
   {
     id: "forced-downgrade",
     title: "Forced Downgrade",
     weight: 15,
-    desc: "Players will each be forced to pick an A-Rank Agent in their next pick.",
+    desc: "Both players' next pick must be an A-Rank Agent.",
   },
   {
     id: "soul-stone",
@@ -69,77 +69,77 @@ export const DRAFT_EVENTS: DraftEventDef[] = [
     weight: 10,
     standardOnly: true,
     oncePerDraft: true, // rosters are keyed by agent id: a 2nd Soul Stone would collide with the 1st
-    desc: "Both players receive a Soul Stone in place of their next pick. When used in a squad it morphs into any unbanned Agent, but must be eliminated first if you lose a round it was used in.",
+    desc: "Both players gain a Soul Stone. It morphs into any unbanned Agent and has unlimited uses, but is eliminated on loss.",
   },
   {
     id: "anomaly-invitation",
     title: "Anomaly Invitation",
     weight: 2,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Anomaly Invitation in place of their next pick. When used in a squad it becomes any unbanned Anomaly Agent.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any unbanned Anomaly Agent directly into your active squad.",
   },
   {
     id: "anomaly-invitation-plus",
     title: "Anomaly Invitation+",
     weight: 1,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Anomaly Invitation+ in place of their next pick. When used in a squad it becomes any Anomaly Agent, banned Agents and your roster included.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any Anomaly Agent (including banned agents) directly into your active squad.",
   },
   {
     id: "rupture-invitation",
     title: "Ruptures Invitation",
     weight: 2,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Rupture Invitation in place of their next pick. When used in a squad it becomes any unbanned Rupture Agent.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any unbanned Rupture Agent directly into your active squad.",
   },
   {
     id: "rupture-invitation-plus",
     title: "Ruptures Invitation+",
     weight: 1,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Rupture Invitation+ in place of their next pick. When used in a squad it becomes any Rupture Agent, banned Agents and your roster included.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any Rupture Agent (including banned agents) directly into your active squad.",
   },
   {
     id: "support-invitation",
     title: "Supports Invitation",
     weight: 2,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Support Invitation in place of their next pick. When used in a squad it becomes any unbanned Support Agent.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any unbanned Support Agent directly into your active squad.",
   },
   {
     id: "support-invitation-plus",
     title: "Supports Invitation+",
     weight: 1,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Support Invitation+ in place of their next pick. When used in a squad it becomes any Support Agent, banned Agents and your roster included.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any Support Agent (including banned agents) directly into your active squad.",
   },
   {
     id: "attack-invitation",
     title: "Attackers Invitation",
     weight: 2,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Attack Invitation in place of their next pick. When used in a squad it becomes any unbanned Attack Agent.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any unbanned Attack Agent directly into your active squad.",
   },
   {
     id: "attack-invitation-plus",
     title: "Attackers Invitation+",
     weight: 1,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Attack Invitation+ in place of their next pick. When used in a squad it becomes any Attack Agent, banned Agents and your roster included.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any Attack Agent (including banned agents) directly into your active squad.",
   },
   {
     id: "stun-invitation",
     title: "Stunners Invitation",
     weight: 2,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Stun Invitation in place of their next pick. When used in a squad it becomes any unbanned Stun Agent.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any unbanned Stun Agent directly into your active squad.",
   },
   {
     id: "stun-invitation-plus",
     title: "Stunners Invitation+",
     weight: 1,
     oncePerDraft: true, // rosters are keyed by item id: a repeat would collide
-    desc: "Both players receive a Stun Invitation+ in place of their next pick. When used in a squad it becomes any Stun Agent, banned Agents and your roster included.",
+    desc: "Gain a 1-use Invitation. Use it during Squad Select to draft any Stun Agent (including banned agents) directly into your active squad.",
   },
   {
     id: "gatekeeper",
@@ -147,13 +147,13 @@ export const DRAFT_EVENTS: DraftEventDef[] = [
     weight: 15,
     standardOnly: true,
     oncePerDraft: true,
-    desc: "From now on, Agents picked by one player cannot be picked by the other.",
+    desc: "Agents selected by one player can no longer be picked by the other.",
   },
   {
-    id: "forced-random-agent",
-    title: "Forced Random Agent",
+    id: "wild-draft",
+    title: "Wild-Draft",
     weight: 25,
-    desc: "A random unbanned, unpicked Agent is selected for both players, then the draft continues as normal.",
+    desc: "Instantly assigns 1 random unbanned, unpicked Agent to each player.",
   },
   // {
   //   id: "remote-control",
@@ -211,7 +211,7 @@ export function isDraftEventEligible(
     if (!hasEligible) return false;
   }
 
-  if (event.id === "forced-random-agent") {
+  if (event.id === "wild-draft") {
     const hasAny = ctx.pool.some((a) => !ctx.banned.includes(a.id));
     if (!hasAny) return false;
   }
@@ -221,6 +221,16 @@ export function isDraftEventEligible(
 
 export function rollDraftEvent(ctx: DraftEventContext): DraftEventDef | null {
   const eligible = DRAFT_EVENTS.filter((e) => isDraftEventEligible(e, ctx));
+  // For dev testing purposes, force a specific event to trigger via console.
+  // usage: forcedDraftEvent = "[EVENT_ID]" in the console.
+  const forcedId =
+    process.env.NODE_ENV === "development"
+      ? (window as unknown as { forcedDraftEvent?: DraftEventId })
+        .forcedDraftEvent
+      : undefined;
+  const forced = eligible.find((e) => e.id === forcedId);
+  if (forced) return forced;
+  
   if (eligible.length === 0) return null;
   const totalWeight = eligible.reduce((sum, e) => sum + e.weight, 0);
   let roll = Math.random() * totalWeight;

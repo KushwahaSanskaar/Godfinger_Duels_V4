@@ -21,7 +21,15 @@ import {
   OVERTIME_STREAK_TO_WIN,
 } from "../Data/modes";
 import type { ModifierDef } from "../Data/Events/universalModifiers";
-import { BOSS_POOL, pickBoss, type Boss } from "../Data/bosses";
+import {
+  BOSS_POOL,
+  chancesAfterRoll,
+  initialBossChances,
+  pickBoss,
+  type BossChances,
+  type Boss,
+} from "../Data/bosses";
+import { describeAffix } from "../Data/Events/affixes";
 import { COOLDOWN_ROUNDS } from "../Data/timers";
 import {
   REMOVAL_COUNT,
@@ -51,6 +59,7 @@ import {
   takeFromPool,
   type AffixOffer,
   type InterludeContext,
+  restrictionsMatter
 } from "../Logic/interludeRules";
 import { hasTime, timeSeconds } from "../Logic/timeInput";
 import {
@@ -198,8 +207,8 @@ export function useGameState() {
     useTracked<PlayerId | null>(null);
   const [roundStage, setRoundStage] = useTracked<RoundStage>("boss");
   const [currentBoss, setCurrentBoss] = useTracked<Boss | null>(null);
-  // The boss rolled most recently (kept after the round ends): it is rolled less often.
-  const [lastBossId, setLastBossId] = useTracked<string | null>(null);
+  // Each boss's chance of being rolled; a boss gets rarer every time it comes up.
+  const [bossChances, setBossChances] = useTracked<BossChances>(initialBossChances);
   // Preset Teams: the team rolled after the reveal. Both players play it; the squads
   // they picked before stay in `squads` and are what the round's consequences hit.
   const [presetTeam, setPresetTeam] = useTracked<string[] | null>(null);
@@ -395,7 +404,25 @@ export function useGameState() {
       playedBefore: roundEffects.horizontal[p] ? playedHistory[p] : undefined,
     });
   }
-  // What the squad screen grays out: rounds-left for each restricted agent.
+  // What the squad screen counts down: rounds left for cooldown / fatigue / freezing.
+  // Horizontal Investment (tier 1) has no countdown; those agents just aren't
+  // eligible until the rest of the roster has played.
+  // Who is held back from squads and how hard: 0/missing = free, 1 = already played
+  // (Horizontal Investment), 2 = cooldown / fatigue / frozen. Held-back agents only
+  // unlock when there aren't enough freer ones to fill the squad.
+  const squadTiers: Record<PlayerId, Record<string, number>> = {
+    p1: tiersFor("p1"),
+    p2: tiersFor("p2"),
+  };
+  // Horizontal Investment still bites while the roster has someone who hasn't played.
+  const horizontalActive: Record<PlayerId, boolean> = {
+    p1:
+      roundEffects.horizontal.p1 &&
+      rosters.p1.some((a) => !playedHistory.p1.includes(a.id)),
+    p2:
+      roundEffects.horizontal.p2 &&
+      rosters.p2.some((a) => !playedHistory.p2.includes(a.id)),
+  };
   const effectiveCooldowns: Record<PlayerId, Record<string, number>> = {
     p1: {},
     p2: {},
@@ -403,7 +430,7 @@ export function useGameState() {
   (["p1", "p2"] as PlayerId[]).forEach((p) => {
     const tiers = tiersFor(p);
     Object.keys(tiers).forEach((id) => {
-      if ((tiers[id] ?? 0) > 0)
+      if ((tiers[id] ?? 0) >= 2)
         effectiveCooldowns[p][id] = Math.max(
           grayedOut[p][id] ?? 0,
           fatigue[p][id] ?? 0,
@@ -734,7 +761,7 @@ export function useGameState() {
         advanceDraft();
         return;
       }
-      case "forced-random-agent": {
+      case "wild-draft": {
         resolveForcedRandomAgent();
         advanceDraft();
         return;
@@ -798,11 +825,11 @@ export function useGameState() {
   function rollBoss() {
     const boss = memoRoll(
       `boss:${round}:${roundAttempt}`,
-      { last: lastBossId },
-      () => pickBoss(BOSS_POOL, lastBossId),
+      { chances: bossChances },
+      () => pickBoss(BOSS_POOL, bossChances),
     );
     setCurrentBoss(boss);
-    if (boss) setLastBossId(boss.id);
+    if (boss) setBossChances(chancesAfterRoll(BOSS_POOL, bossChances, boss.id));
   }
 
   // The squads are settled. A secret modifier is announced now, before the round
@@ -818,7 +845,7 @@ export function useGameState() {
   // Preset Teams: the squads the players picked stay on the line, but a random team
   // (the same for both) is what actually fights. Shown on its own screen first.
   function afterReveal() {
-    if (roundEffects.modifier?.id === "preset-teams") {
+    if (roundEffects.modifier?.id === "mirror-match") {
       const team = memoRoll(`preset:${round}:${roundAttempt}`, null, () =>
         rollPresetTeam(pool),
       );
@@ -1465,7 +1492,9 @@ export function useGameState() {
         );
       return { p1: tick(f.p1), p2: tick(f.p2) };
     });
-    setRoundEffects(EMPTY_EFFECTS); // everything else lasted this one round
+    // Everything else lasted this one round; Horizontal Investment stays until
+    // the player's whole roster has played.
+    setRoundEffects((e) => ({ ...EMPTY_EFFECTS, horizontal: e.horizontal }));
     setEliminatedThisRound({ p1: [], p2: [] });
     setCurrentBoss(null);
 
@@ -1594,21 +1623,21 @@ export function useGameState() {
     const offer =
       ctx && leader
         ? memoRoll(
-            `affixoffer:${round}`,
-            {
-              leader,
-              exclude,
-              p1: idsOf(ctx.rosters.p1),
-              p2: idsOf(ctx.rosters.p2),
-              pool1: idsOf(ctx.eliminatedPool.p1),
-              pool2: idsOf(ctx.eliminatedPool.p2),
-              last: ctx.lastSquads,
-              winner: ctx.lastWinner,
-              immune: ctx.immune,
-              ended: ctx.round,
-            },
-            () => rollAffixOffer(ctx, leader, Math.random, exclude),
-          )
+          `affixoffer:${round}`,
+          {
+            leader,
+            exclude,
+            p1: idsOf(ctx.rosters.p1),
+            p2: idsOf(ctx.rosters.p2),
+            pool1: idsOf(ctx.eliminatedPool.p1),
+            pool2: idsOf(ctx.eliminatedPool.p2),
+            last: ctx.lastSquads,
+            winner: ctx.lastWinner,
+            immune: ctx.immune,
+            ended: ctx.round,
+          },
+          () => rollAffixOffer(ctx, leader, Math.random, exclude),
+        )
         : null;
     if (!offer) {
       startInterlude(rest, ctx);
@@ -1630,11 +1659,7 @@ export function useGameState() {
     if (!claimTurn(`affix-choice:${round}`)) return; // first click wins, even in the same render
     setAffixChoice({
       def,
-      // Frozen Assets is a positive affix, but it lands on the leading player
-      target:
-        kind === "positive" && !def.hitsOpponent
-          ? affixOffer.chooser
-          : affixOffer.leader,
+      target: kind === "positive" ? affixOffer.chooser : affixOffer.leader,
     });
     setAffixSelection([]);
     setNecroStage("sacrifice");
@@ -1655,10 +1680,15 @@ export function useGameState() {
       noEffect: true,
     });
     switch (def.id) {
+      case "horizontal-investment":
+      case "overworked":
+        return restrictionsMatter(interludeCtx, target)
+          ? null
+          : wasted("NO EFFECT — squads already use the whole roster.");
       case "kamikaze":
         if (!kamikazeApplies(interludeCtx, target))
           return wasted(
-            "NO EFFECT — Kamikaze can’t touch this player right now.",
+            "NO EFFECT — Kamikaze can't touch this player right now.",
           );
         return {
           candidates: byId(kamikazeCandidates(interludeCtx, target)),
@@ -1670,14 +1700,14 @@ export function useGameState() {
         const c = byId(contractCandidates(interludeCtx, target));
         return c.length
           ? {
-              candidates: c,
-              min: 1,
-              max: 1,
-              label: "CHOOSE 1 AGENT TO WORK OVERTIME",
-            }
+            candidates: c,
+            min: 1,
+            max: 1,
+            label: "CHOOSE 1 AGENT TO WORK OVERTIME",
+          }
           : wasted(
-              "NO EFFECT — nobody from last round is left to work overtime.",
-            );
+            "NO EFFECT — nobody from last round is left to work overtime.",
+          );
       }
       case "emergency-reinforcements":
         return {
@@ -1714,14 +1744,17 @@ export function useGameState() {
         };
       }
       case "frozen-assets": {
+        if (!restrictionsMatter(interludeCtx, target))
+          return wasted("NO EFFECT — squads already use the whole roster.");
         const c = frozenCandidates(interludeCtx, target, Object.keys(fatigue[target]));
-        return c.length
+        const n = Math.min(2, c.length);
+        return n
           ? {
-              candidates: c,
-              min: 1,
-              max: 1,
-              label: `CHOOSE 1 AGENT FROM ${displayName(target).toUpperCase()}’S ROSTER TO FREEZE`,
-            }
+            candidates: c,
+            min: n,
+            max: n,
+            label: `CHOOSE ${n} AGENT${n > 1 ? "S" : ""} FROM ${displayName(target).toUpperCase()}’S ROSTER TO FREEZE`,
+          }
           : wasted("NO EFFECT — there is nobody left to freeze.");
       }
       default:
@@ -1756,7 +1789,13 @@ export function useGameState() {
       affix: {
         id: def.id,
         title: def.title,
-        desc: def.desc,
+        desc: affixOffer
+          ? describeAffix(def, {
+            leader: displayName(affixOffer.leader),
+            trailer: displayName(affixOffer.chooser),
+            viewer: null,
+          })
+          : "",
         polarity: def.polarity,
         target,
         note,
@@ -1813,6 +1852,10 @@ export function useGameState() {
 
     switch (def.id) {
       case "horizontal-investment":
+        if (spec?.noEffect) {
+          note = "No effect.";
+          break;
+        }
         setRoundEffects((e) => ({
           ...e,
           horizontal: { ...e.horizontal, [target]: true },
@@ -1825,6 +1868,10 @@ export function useGameState() {
         }));
         break;
       case "overworked": {
+        if (spec?.noEffect) {
+          note = "No effect.";
+          break;
+        }
         const victims = memoRoll(
           `overworked:${round}:${target}`,
           { roster: idsOf(rosters[target]), immune: immune[target] },
@@ -1833,7 +1880,7 @@ export function useGameState() {
               (a) => !immune[target].includes(a.id),
             );
             const out: Agent[] = [];
-            while (out.length < 2 && left.length) {
+            while (out.length < 1 && left.length) {
               out.push(...left.splice(Math.floor(Math.random() * left.length), 1));
             }
             return out;
@@ -1852,13 +1899,16 @@ export function useGameState() {
         break;
       }
       case "frozen-assets": {
-        const frozen = rosters[target].find((a) => a.id === sel[0]);
-        if (!spec?.noEffect && frozen) {
+        const frozen = rosters[target].filter((a) => sel.includes(a.id));
+        if (!spec?.noEffect && frozen.length) {
           setFatigue((f) => ({
             ...f,
-            [target]: { ...f[target], [frozen.id]: 2 },
+            [target]: {
+              ...f[target],
+              ...Object.fromEntries(frozen.map((a) => [a.id, 2])),
+            },
           }));
-          note = `${frozen.name} is frozen for 2 rounds.`;
+          note = `${frozen.map((a) => a.name).join(" and ")} ${frozen.length > 1 ? "are" : "is"} frozen for 2 rounds.`;
         } else note = "No effect.";
         break;
       }
@@ -2001,7 +2051,7 @@ export function useGameState() {
     setPendingRoundWinner(null);
     setRoundStage("boss");
     setCurrentBoss(null);
-    setLastBossId(null);
+    setBossChances(initialBossChances());
     setPresetTeam(null);
     setSquads({ p1: [], p2: [] });
     setSquadsConfirmed({ p1: false, p2: false });
@@ -2164,6 +2214,8 @@ export function useGameState() {
     immune,
     playedHistory,
     lossPenalty,
+    horizontalActive,
+    squadTiers,
     eliminatedPool,
     roundAttempt,
     roundEffects,

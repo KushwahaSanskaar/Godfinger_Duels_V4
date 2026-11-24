@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type {
   Agent,
   AffixChoice,
@@ -17,8 +18,11 @@ import { ScoreSubmit } from "./ScoreSubmit";
 import { AffixScreen } from "./AffixScreen";
 import { ModifierScreen } from "./ModifierScreen";
 import { PresetScreen } from "./PresetScreen";
-import { UNIVERSAL_MODIFIERS } from "../Data/Events/universalModifiers";
-import { ActiveEffects } from "../Components/ActiveEffects";
+import { UNIVERSAL_MODIFIERS, SECRET_HINTS } from "../Data/Events/universalModifiers";
+import { Notice } from "../Components/Notice";
+
+// Keeps Squad Select up after the last lock-in so its reveal wipe can finish.
+const SQUAD_OUTRO_MS = 1700;
 
 interface GameplayPhaseProps {
   pool: Agent[];
@@ -30,6 +34,11 @@ interface GameplayPhaseProps {
   roundWins: Record<PlayerId, number>;
   overtimeStreak: Record<PlayerId, number>;
   rosters: Record<PlayerId, Agent[]>;
+  eliminatedPool: Record<PlayerId, Agent[]>;
+  immune: Record<PlayerId, string[]>; // Overtime Contract agents
+  horizontalActive: Record<PlayerId, boolean>; // Horizontal Investment still restricting
+  squadTiers: Record<PlayerId, Record<string, number>>; // who is held back from squads
+  lossPenalty: Record<PlayerId, number>; // Emergency Reinforcements: agents lost on a loss
   squads: Record<PlayerId, string[]>;
   squadsConfirmed: Record<PlayerId, boolean>;
   grayedOut: Record<PlayerId, Record<string, number>>;
@@ -99,6 +108,11 @@ export function GameplayPhase({
   roundWins,
   overtimeStreak,
   rosters,
+  eliminatedPool,
+  immune,
+  horizontalActive,
+  squadTiers,
+  lossPenalty,
   squads,
   squadsConfirmed,
   grayedOut,
@@ -145,12 +159,33 @@ export function GameplayPhase({
   veto,
   onAcknowledgePreset,
 }: GameplayPhaseProps) {
+  // Set during render (not in an effect) so Squad Select is never unmounted in between.
+  const [lastStage, setLastStage] = useState(roundStage);
+  const [squadOutro, setSquadOutro] = useState(false);
+  if (roundStage !== lastStage) {
+    setLastStage(roundStage);
+    setSquadOutro(lastStage === "squad");
+  }
+
+  useEffect(() => {
+    if (!squadOutro) return;
+    const timer = setTimeout(() => setSquadOutro(false), SQUAD_OUTRO_MS);
+    return () => clearTimeout(timer);
+  }, [squadOutro]);
+
+  const [hintSalt] = useState(() => Math.floor(Math.random() * SECRET_HINTS.length));
+  const secretHint = effects.modifier?.hidden
+    ? SECRET_HINTS[(hintSalt + round) % SECRET_HINTS.length]
+    : null;
+
   // The screens that come BEFORE the boss roll.
   if (roundStage === "affix" && affixOffer) {
     return (
       <AffixScreen
         offer={affixOffer}
         rosters={rosters}
+        eliminated={eliminatedPool}
+        immune={immune}
         choice={affixChoice}
         pick={affixPick}
         selection={affixSelection}
@@ -167,12 +202,16 @@ export function GameplayPhase({
       <ModifierScreen
         modifier={modifierRoll}
         onAcknowledge={onAcknowledgeModifier}
+        rosters={rosters}
+        eliminated={eliminatedPool}
+        immune={immune}
+        displayName={displayName}
       />
     );
   }
 
   // A secret modifier is announced after squad select, right before the round.
-  if (roundStage === "reveal") {
+  if (roundStage === "reveal" && !squadOutro) {
     const def = UNIVERSAL_MODIFIERS.find((m) => m.id === effects.modifier?.id);
     if (def)
       return (
@@ -180,16 +219,22 @@ export function GameplayPhase({
           modifier={def}
           revealed
           onAcknowledge={onAcknowledgeReveal}
+          rosters={rosters}
+          eliminated={eliminatedPool}
+          immune={immune}
+          displayName={displayName}
         />
       );
   }
 
   // Preset Teams: the rolled team that is actually played.
-  if (roundStage === "preset" && presetTeam) {
+  if (roundStage === "preset" && presetTeam && !squadOutro) {
     return (
       <PresetScreen
         team={presetTeam}
-        title={effects.modifier?.id === "deja-vu" ? "DEJA VU" : "PRESET TEAM"}
+        title={(
+          UNIVERSAL_MODIFIERS.find((m) => m.id === effects.modifier?.id)?.title ?? "PRESET TEAM"
+        ).toUpperCase()}
         subtitle={
           effects.modifier?.id === "deja-vu"
             ? "A TEAM FROM THE ELIMINATED AGENTS"
@@ -209,16 +254,17 @@ export function GameplayPhase({
   const shown: RoundEffects = effects.modifier?.hidden
     ? { ...effects, modifier: { id: "hidden", title: "???" } }
     : effects;
-  const banner = <ActiveEffects effects={shown} displayName={displayName} />;
 
   if (roundStage === "boss") {
     return (
       <>
-        {banner}
+        {secretHint && (
+          <div className="mb-4 flex">
+            <Notice className="border-event bg-event-plate text-event-light" title={secretHint} icon="◆" />
+          </div>
+        )}
         <BossRoll
           currentBoss={currentBoss}
-          round={round}
-          totalRounds={totalRounds}
           onRoll={onRollBoss}
           onContinue={onContinueFromBoss}
         />
@@ -226,13 +272,17 @@ export function GameplayPhase({
     );
   }
 
-  if (roundStage === "squad") {
+  if (roundStage === "squad" || squadOutro) {
     return (
       <>
-        {banner}
         <SquadSelect
           round={round}
           totalRounds={totalRounds}
+          bossName={currentBoss?.name}
+          overtimeStreak={overtimeStreak}
+          immune={immune}
+          horizontalActive={horizontalActive}
+          tiers={squadTiers}
           rosters={rosters}
           squads={squads}
           squadsConfirmed={squadsConfirmed}
@@ -253,6 +303,7 @@ export function GameplayPhase({
           onToggleControl={onToggleControl}
           onConfirmControl={onConfirmControl}
           onControlTimeout={onControlTimeout}
+          secretHint={secretHint}
         />
       </>
     );
@@ -260,26 +311,25 @@ export function GameplayPhase({
 
   return (
     <>
-      {banner}
       <ScoreSubmit
         pool={pool}
-        banned={banned}
         round={round}
         totalRounds={totalRounds}
         bossName={currentBoss?.name}
-        roundWins={roundWins}
         overtimeStreak={overtimeStreak}
         timePenalty={effects.timePenalty}
+        immune={immune}
         rosters={rosters}
         squads={battleSquads}
         morphs={battleMorphs}
         swapped={effects.modifier?.id === "armory-swap"}
         preset={
-          effects.modifier?.id === "preset-teams" ||
+          effects.modifier?.id === "mirror-match" ||
           effects.modifier?.id === "deja-vu" ||
           effects.modifier?.id === "armory-swap"
         }
         veto={veto}
+        lossPenalty={lossPenalty}
         timeInputs={timeInputs}
         submitted={submitted}
         onTimeChange={onTimeChange}
@@ -289,7 +339,6 @@ export function GameplayPhase({
         removalSelection={removalSelection}
         onToggleRemoval={onToggleRemoval}
         onConfirmRemoval={onConfirmRemoval}
-        roundLog={roundLog}
         displayName={displayName}
       />
     </>

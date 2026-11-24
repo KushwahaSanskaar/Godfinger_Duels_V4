@@ -12,6 +12,7 @@ import {
   isMorphItem,
   isSoulStone,
 } from "../Data/morphItems";
+import { SQUAD_SIZE } from "./squadRules";
 
 export const SOUL_ID = SOUL_STONE_AGENT.id;
 export const SOUL_PLUS_ID = SOUL_STONE_PLUS_AGENT.id;
@@ -128,8 +129,6 @@ export function positiveAvailable(
       return contractCandidates(ctx, chooser).length >= 1;
     case "emergency-reinforcements":
       return ownRevivable(ctx, chooser).length >= 1;
-    case "frozen-assets":
-      return frozenCandidates(ctx, otherPlayer(chooser)).length >= 1;
     case "veto-card":
       return !ctx.veto?.[chooser]; // one card at a time
     case "soul-stone-affix":
@@ -151,6 +150,37 @@ export interface AffixOffer {
   negative: AffixDef | null; // for the LEADING player, if the loser gives it
   leader: PlayerId;
   chooser: PlayerId; // the losing player decides
+  negativeWasted?: boolean; // the negative would do nothing if given (shown on its card)
+}
+
+export function restrictionsMatter(
+  ctx: InterludeContext,
+  target: PlayerId,
+): boolean {
+  return ctx.rosters[target].length > SQUAD_SIZE;
+}
+
+// Would this NEGATIVE affix do anything to LEADING player? Negatives are offered either
+// way; this only lets the card warn that giving it would be wasted.
+export function negativeApplies(
+  def: AffixDef,
+  ctx: InterludeContext,
+  leader: PlayerId,
+): boolean {
+  switch (def.id) {
+    case "kamikaze":
+      return kamikazeApplies(ctx, leader);
+    case "frozen-assets":
+      return (
+        restrictionsMatter(ctx, leader) &&
+        frozenCandidates(ctx, leader).length >= 1
+      );
+    case "overworked":
+    case "horizontal-investment":
+      return restrictionsMatter(ctx, leader);
+    default:
+      return true;
+  }
 }
 
 function pickOne<T>(list: T[], rng: () => number): T | null {
@@ -178,7 +208,13 @@ export function rollAffixOffer(
   const positive = pickOne(positives, rng);
   const negative = pickOne(negatives, rng);
   if (!positive && !negative) return null;
-  return { positive, negative, leader, chooser };
+  return {
+    positive,
+    negative,
+    leader,
+    chooser,
+    negativeWasted: !!negative && !negativeApplies(negative, ctx, leader),
+  };
 }
 
 // Different real agents that have been eliminated from either roster.

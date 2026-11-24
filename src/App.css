@@ -50,13 +50,6 @@
   );
 }
 
-@font-face {
-  font-family: "TheSansMonoSCd";
-  src: url("../public/fonts/TheSansMonoSCdW5Regular.otf") format("opentype");
-  font-weight: normal;
-  font-style: normal;
-}
-
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -64,118 +57,6 @@
   to {
     transform: rotate(360deg);
   }
-}
-
-@keyframes glitch {
-  0% {
-    transform: translateY(-5px) skewX(0deg);
-    text-shadow:
-      3px 0 0 #972934,
-      -3px 0 0 #1748a1;
-  }
-  10% {
-    transform: translateY(-8px) skewX(-4deg) translateX(-3px);
-  }
-  20% {
-    transform: translateY(-1px) skewX(4deg) translateX(3px);
-    text-shadow:
-      -4px 0 0 #972934,
-      4px 0 0 #1748a1;
-  }
-  30% {
-    transform: translateY(-6px) skewX(0deg) translateX(0px);
-    opacity: 0;
-  }
-  40% {
-    transform: translateY(-5px) skewX(-6deg) translateX(4px);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(-3px) skewX(0deg);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(-5px) skewX(0deg);
-    opacity: 1;
-  }
-}
-
-.glitch {
-  animation: glitch 400ms steps(6) forwards;
-}
-
-@keyframes wipe-overlay-p1 {
-  0% {
-    transform: translateX(-100%);
-  }
-  10% {
-    transform: translateX(0%);
-  }
-  90% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes wipe-overlay-p2 {
-  0% {
-    transform: translateX(100%);
-  }
-  10% {
-    transform: translateX(0%);
-  }
-  90% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-.wipe-overlay-p1 {
-  animation: wipe-overlay-p1 800ms steps(12) forwards;
-}
-.wipe-overlay-p2 {
-  animation: wipe-overlay-p2 800ms steps(12) forwards;
-}
-
-@keyframes dither-wipe-in {
-  0% {
-    transform: translateX(-110%);
-  }
-  15% {
-    transform: translateX(0%);
-  }
-  80% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(110%);
-  }
-}
-
-@keyframes dither-wipe-out {
-  0% {
-    transform: translateX(110%);
-  }
-  15% {
-    transform: translateX(0%);
-  }
-  80% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-110%);
-  }
-}
-
-.dither-wipe-in {
-  animation: dither-wipe-in 1100ms linear forwards;
-}
-.dither-wipe-out {
-  animation: dither-wipe-out 1100ms linear forwards;
 }
 
 /* Offset and bounce amplitude follow the title's font size. */
@@ -231,12 +112,6 @@
 .draft-roster-p2 {
   grid-column: 3;
 }
-.draft-phase-header {
-  height: clamp(68px, 9vh, 180px);
-}
-.draft-phase-title {
-  font-size: clamp(30px, min(6vw, 7vh), 118px);
-}
 .responsive-agent-pool {
   width: 100%;
   min-width: 0;
@@ -274,16 +149,6 @@
   .draft-shell {
     padding: 6px;
   }
-  .draft-phase-header {
-    height: 72px;
-  }
-  .draft-phase-title {
-    font-size: clamp(25px, 7vw, 45px);
-  }
-  #phase-header-status {
-    padding-left: 5px;
-    padding-right: 5px;
-  }
   .draft-layout {
     gap: 6px;
   }
@@ -303,21 +168,6 @@
   --draft-text-md: clamp(12px, 1vw + 0.25vh, 25px);
   --draft-text-lg: clamp(13px, 1.15vw + 0.3vh, 30px);
   --draft-text-timer: clamp(17px, 1.6vw + 0.45vh, 43px);
-}
-/* Header information is portaled outside the central content area. */
-.draft-shell #phase-header-status {
-  gap: clamp(6px, 1vw, 24px);
-  padding-inline: clamp(6px, 1.5vw, 48px);
-}
-.draft-shell #phase-header-status .font-pixel.text-\[10px\] {
-  font-size: var(--draft-text-xs);
-}
-.draft-shell #phase-header-status .font-semibold.text-sm {
-  font-size: var(--draft-text-sm);
-}
-.draft-shell #phase-header-status .font-pixel.text-2xl {
-  font-size: var(--draft-text-timer);
-  white-space: nowrap;
 }
 /* Group labels must remain centered without pushing the grid down. */
 .draft-shell .agent-pool-group-title {
@@ -360,10 +210,10 @@
 .draft-shell .draft-main > div > .border-p2 .font-pixel.text-xl {
   font-size: var(--draft-text-lg);
 }
-.draft-shell .draft-main > div > .border-p2 .font-mono {
+.draft-shell .draft-main > div > .border-p2 .font-sans {
   font-size: var(--draft-text-sm);
 }
-.draft-shell .draft-main .font-sand.text-xs {
+.draft-shell .draft-main .font-sans.text-xs {
   font-size: var(--draft-text-sm);
 }
 @media (max-width: 650px) {
@@ -405,12 +255,6 @@
       );
     gap: clamp(24px, 1.2vw, 50px);
   }
-  .draft-phase-header {
-    height: clamp(150px, 10vh, 260px);
-  }
-  .draft-phase-title {
-    font-size: clamp(100px, 4.5vw, 185px);
-  }
   .draft-roster .relative.h-\[70px\] {
     height: clamp(100px, 7vh, 165px);
   }
@@ -420,4 +264,230 @@
   .draft-shell .agent-pool-group-heading {
     height: clamp(38px, 2.8vh, 65px);
   }
+}
+
+.text-trim {
+  text-box: trim-both cap alphabetic;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .arcade-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #463c59 #141420;
+  }
+}
+
+.arcade-scroll::-webkit-scrollbar {
+  width: 12px;
+}
+
+.arcade-scroll::-webkit-scrollbar-track {
+  background: #141420;
+  border-left: 2px solid #463c59;
+}
+
+.arcade-scroll::-webkit-scrollbar-thumb {
+  background: #66547d;
+  border-radius: 0;
+}
+
+.arcade-scroll::-webkit-scrollbar-thumb:hover {
+  background: #f5c518;
+}
+
+.arcade-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+
+/* ===== Phase cut-in ===== (Never thought my animation experience would be useful for this, but here we are.)
+   1400ms. Stepped frames like the other wipes (step-end + hand-placed keyframes =
+   an ease curve played at arcade frame rate).
+   0      strike line (anticipation)
+   40     back band slams in
+   110    main band slams in, overshoots
+   290    IMPACT: flash, shake, speed lines
+   330+   kicker, letters stamp in one by one, rule extends
+   1060   main band leaves, back band follows at 1150
+   1400   done */
+
+.ci-dim { animation: ci-dim 1400ms linear forwards; }
+.ci-screen-flash { opacity: 0; animation: ci-screen-flash 90ms step-end 290ms forwards; }
+.ci-strike { opacity: 0; transform-origin: left; animation: ci-strike 220ms step-end forwards; }
+.ci-speed { opacity: 0; animation: ci-speed 280ms steps(7, end) both; }
+.ci-back {
+  animation:
+    ci-back-in 170ms step-end 40ms both,
+    ci-back-out 200ms step-end 1150ms forwards;
+}
+.ci-band {
+  animation:
+    ci-band-in 180ms step-end 110ms both,
+    ci-band-out 190ms step-end 1060ms forwards;
+}
+.ci-flash { opacity: 0; animation: ci-flash 110ms step-end 290ms forwards; }
+.ci-shake { animation: ci-shake 200ms step-end 290ms; }
+.ci-marquee { animation: ci-marquee 7s linear infinite; }
+.ci-kicker { animation: ci-kicker 150ms step-end 330ms both; }
+.ci-letter { animation: ci-letter 150ms step-end calc(360ms + var(--i) * 26ms) both; }
+.ci-rule { transform-origin: center; animation: ci-rule 150ms step-end 470ms both; }
+
+.ci-root[data-paused],
+.ci-root[data-paused] * { animation-play-state: paused !important; }
+
+@keyframes ci-dim {
+  0% { opacity: 0; }
+  4%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes ci-screen-flash {
+  0% { opacity: 0.08; }
+  50% { opacity: 0.03; }
+  100% { opacity: 0; }
+}
+@keyframes ci-strike {
+  0% { opacity: 1; transform: scaleX(0); }
+  20% { transform: scaleX(0.45); }
+  40% { transform: scaleX(0.8); }
+  60% { transform: scaleX(1); }
+  80% { opacity: 0.4; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+@keyframes ci-speed {
+  0% { opacity: 1; transform: translateX(-45vw); }
+  100% { opacity: 0.3; transform: translateX(130vw); }
+}
+@keyframes ci-back-in {
+  0% { transform: translateX(-115%); }
+  20% { transform: translateX(-48%); }
+  40% { transform: translateX(-16%); }
+  60% { transform: translateX(-3%); }
+  80%, 100% { transform: translateX(0); }
+}
+@keyframes ci-back-out {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(5%); }
+  40% { transform: translateX(20%); }
+  60% { transform: translateX(46%); }
+  80% { transform: translateX(80%); }
+  100% { transform: translateX(118%); }
+}
+@keyframes ci-band-in {
+  0% { transform: translateX(-118%); }
+  17% { transform: translateX(-55%); }
+  33% { transform: translateX(-22%); }
+  50% { transform: translateX(-6%); }
+  67%, 83% { transform: translateX(2%); }
+  100% { transform: translateX(0); }
+}
+@keyframes ci-band-out {
+  0% { transform: translateX(0); }
+  17% { transform: translateX(-1.5%); }
+  33% { transform: translateX(6%); }
+  50% { transform: translateX(22%); }
+  67% { transform: translateX(48%); }
+  83% { transform: translateX(82%); }
+  100% { transform: translateX(118%); }
+}
+@keyframes ci-flash {
+  0% { opacity: 0.9; }
+  33% { opacity: 0.45; }
+  66% { opacity: 0.15; }
+  100% { opacity: 0; }
+}
+@keyframes ci-shake {
+  0% { transform: translate(0.7vw, -0.35vw); }
+  20% { transform: translate(-0.55vw, 0.4vw); }
+  40% { transform: translate(0.4vw, -0.2vw); }
+  60% { transform: translate(-0.2vw, 0.15vw); }
+  80% { transform: translate(0.08vw, -0.05vw); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes ci-marquee {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+@keyframes ci-kicker {
+  0% { transform: translateX(-105%); }
+  25% { transform: translateX(-45%); }
+  50% { transform: translateX(-12%); }
+  75%, 100% { transform: translateX(0); }
+}
+@keyframes ci-letter {
+  0% { opacity: 0; transform: scale(2.2); }
+  33% { opacity: 1; transform: scale(1.4); }
+  66% { opacity: 1; transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes ci-rule {
+  0% { transform: scaleX(0); }
+  25% { transform: scaleX(0.4); }
+  50% { transform: scaleX(0.8); }
+  75% { transform: scaleX(1.04); }
+  100% { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ci-root * { animation: none !important; }
+  .ci-screen-flash, .ci-strike, .ci-speed, .ci-flash { display: none; }
+  .ci-root .ci-dim { animation: ci-dim 1100ms linear forwards !important; }
+  .ci-root .ci-shake { animation: ci-dim 1100ms linear forwards !important; }
+}
+
+/* Wipe Animation */
+/* ===== Wipe (shared by event, pick slots, boss reveal, squad slots) =====
+   One slab, stepped like the cut-in: slams in, flashes on impact, holds with
+   scrolling stripes, then shoots out leaving a dither trail. Percentages of
+   --wipe-ms, so callers keep their own timings. Covered from 14% to 80%. */
+
+.wipe-slab { animation: wipe-slab var(--wipe-ms) step-end both; }
+.wipe-flash { opacity: 0; animation: wipe-flash var(--wipe-ms) step-end both; }
+.wipe-stripes {
+  background-image: linear-gradient(135deg, rgb(20 20 32 / 0.13) 25%, transparent 25%, transparent 50%, rgb(20 20 32 / 0.13) 50%, rgb(20 20 32 / 0.13) 75%, transparent 75%);
+  background-size: 24px 24px;
+  animation: wipe-stripes 480ms steps(6, end) infinite;
+}
+.wipe-letter { animation: wipe-letter 150ms step-end both; }
+
+@keyframes wipe-slab {
+  0% { transform: translateX(-112%); }
+  3% { transform: translateX(-64%); }
+  6% { transform: translateX(-30%); }
+  9% { transform: translateX(-10%); }
+  12% { transform: translateX(-2%); }
+  14%, 80% { transform: translateX(0); }
+  83% { transform: translateX(5%); }
+  86% { transform: translateX(20%); }
+  89% { transform: translateX(44%); }
+  92% { transform: translateX(72%); }
+  95% { transform: translateX(100%); }
+  100% { transform: translateX(118%); }
+}
+@keyframes wipe-flash {
+  0% { opacity: 0; }
+  14% { opacity: 0.75; }
+  17% { opacity: 0.35; }
+  20% { opacity: 0.12; }
+  23%, 100% { opacity: 0; }
+}
+@keyframes wipe-stripes {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(24px); }
+}
+@keyframes wipe-letter {
+  0% { opacity: 0; transform: scale(2.2); }
+  33% { opacity: 1; transform: scale(1.4); }
+  66% { opacity: 1; transform: scale(0.97); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wipe-slab { animation: wipe-fade var(--wipe-ms) linear both; }
+  .wipe-flash, .wipe-stripes, .wipe-letter { animation: none; }
+  .wipe-flash { display: none; }
+}
+@keyframes wipe-fade {
+  0% { opacity: 0; }
+  14%, 80% { opacity: 1; }
+  100% { opacity: 0; }
 }

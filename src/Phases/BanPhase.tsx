@@ -4,7 +4,8 @@ import { AgentPool } from "../Components/AgentPool";
 import { useEffect, useState } from "react";
 import { useTurnTimer } from "../Hooks/useTurnTimer";
 import { TIMER_CONFIG } from "../Data/timers";
-import { HeaderStatusPortal } from "../Components/HeaderStatusPortal";
+import { HudStatusPortal } from "../Components/HudStatusPortal";
+import { Timer } from "../Components/Timer";
 
 interface BanPhaseProps {
   pool: Agent[];
@@ -44,27 +45,13 @@ export function BanPhase({
 
   return (
     <Card>
-      <HeaderStatusPortal>
-        {/* Left information */}
-        <div className="flex flex-col gap-1 text-white">
-          <span className="font-pixel text-[10px]">
-            Ban {banIndex + 1} of {classGroups.length}
-          </span>
-
-          <span className="font-semibold text-sm">
-            {displayName(banTurn)}'s ban
-          </span>
-        </div>
-
-        {/* Right Information */}
-        <div
-          className={`font-pixel text-2xl ${
-            timeLeft <= 10 ? "text-yellow-300" : "text-white"
-          }`}
-        >
-          0:{timeLeft.toString().padStart(2, "0")}
-        </div>
-      </HeaderStatusPortal>
+      <HudStatusPortal>
+        <Timer
+          timeLeft={timeLeft}
+          total={TIMER_CONFIG.banSeconds}
+          turnKey={`ban-${banIndex}`}
+        />
+      </HudStatusPortal>
       <div>
         <AgentPool
           agents={pool}
@@ -84,7 +71,6 @@ export function BanPhase({
             setSelectedAgent(null);
           }}
           confirmLabel="BAN"
-          confirmColor="#E63946"
         />
       </div>
     </Card>

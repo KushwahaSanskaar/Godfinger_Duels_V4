@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import type { GameEvent } from "../types";
+import { ArrowIcon } from "./Icons";
+import { Wipe } from "../Components/Wipe";
 
 type WipeState = "idle" | "entering" | "visible" | "leaving";
 
@@ -50,7 +52,7 @@ export function EventOverlay({ event, onAcknowledge }: EventOverlayProps) {
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-[#141420]"
+      className={`relative w-full overflow-hidden ${displayedEvent ? "bg-ink" : ""}`}
       style={{ height: "clamp(360px, 55.56vh, 1200px)" }}
     >
       {/* EVENT CONTENT */}
@@ -61,15 +63,14 @@ export function EventOverlay({ event, onAcknowledge }: EventOverlayProps) {
         >
           {/* TOP BANNER */}
           <div
-            className="shrink-0 bg-[#29251C] border-b-2 border-event text-center"
+            className="shrink-0 border-b-2 border-event bg-event-plate text-center"
             style={{
-              padding:
-                "clamp(8px, min(0.83vw, 1.48vh), 32px) clamp(12px, 1.25vw, 48px)",
+              padding: "clamp(10px, min(1vw, 1.8vh), 36px) clamp(12px, 1.25vw, 48px)",
             }}
           >
             <span
-              className="font-pixel tracking-widest text-event"
-              style={{ fontSize: "clamp(9px, min(0.73vw, 1.3vh), 28px)" }}
+              className="text-trim font-pixel tracking-widest text-event"
+              style={{ fontSize: "clamp(11px, min(0.95vw, 1.7vh), 32px)" }}
             >
               ◆ DRAFT EVENT ◆
             </span>
@@ -77,19 +78,15 @@ export function EventOverlay({ event, onAcknowledge }: EventOverlayProps) {
 
           {/* EVENT NAME */}
           <div
-            className="flex min-h-0 shrink flex-col items-center justify-center text-center"
+            className="flex min-h-0 shrink-0 flex-col items-center justify-center text-center"
             style={{
-              gap: "clamp(8px, 1.04vw, 40px)",
-              padding:
-                "clamp(12px, min(2vw, 2.2vh), 80px) clamp(12px, 1.67vw, 64px)",
+              gap: "clamp(12px, 1.3vw, 48px)",
+              padding: "clamp(24px, min(3.2vw, 4.5vh), 120px) clamp(12px, 1.67vw, 64px)",
             }}
           >
             <h2
-              className="font-pixel font-bold text-white leading-tight uppercase break-words max-w-full"
-              style={{
-                textShadow: "4px 4px 0 #B8960F",
-                WebkitTextStroke: "1px #F5C518",
-              }}
+              className="text-trim font-pixel font-bold text-white leading-tight uppercase tracking-tighter break-words max-w-full"
+              style={{ fontSize: "clamp(28px, min(4.2vw, 7.5vh), 120px)" }}
             >
               {displayedEvent.title}
             </h2>
@@ -98,13 +95,13 @@ export function EventOverlay({ event, onAcknowledge }: EventOverlayProps) {
               className="bg-event"
               style={{
                 width: "clamp(64px, 6.67vw, 256px)",
-                height: "clamp(2px, 0.21vw, 8px)",
+                height: "clamp(3px, 0.28vw, 10px)",
               }}
             />
 
             <span
-              className="font-pixel text-event tracking-widest"
-              style={{ fontSize: "clamp(8px, min(0.625vw, 1.11vh), 24px)" }}
+              className="text-trim font-pixel tracking-widest text-event"
+              style={{ fontSize: "clamp(11px, min(0.95vw, 1.7vh), 32px)" }}
             >
               RULE MODIFIER
             </span>
@@ -112,26 +109,16 @@ export function EventOverlay({ event, onAcknowledge }: EventOverlayProps) {
 
           {/* EVENT DESCRIPTION */}
           <div
-            className="min-h-0 flex-1 overflow-y-auto bg-[#24212A] border-event text-center flex flex-col justify-center"
+            className="flex min-h-0 flex-1 flex-col items-center justify-center border-2 border-event/60 bg-[#24212A] text-center"
             style={{
               marginInline: "clamp(12px, 1.25vw, 48px)",
-              borderLeftWidth: "clamp(3px, 0.21vw, 8px)",
-              padding: "clamp(12px, min(1.67vw, 2.96vh), 64px)",
+              gap: "clamp(8px, 0.9vw, 32px)",
+              padding: "clamp(14px, min(1.5vw, 2.6vh), 56px)",
             }}
           >
             <p
-              className="font-pixel text-event tracking-wider"
-              style={{
-                fontSize: "clamp(8px, min(0.625vw, 1.11vh), 24px)",
-                marginBottom: "clamp(8px, 0.83vw, 32px)",
-              }}
-            >
-              EVENT EFFECT
-            </p>
-
-            <p
-              className="font-mono font-bold text-white leading-relaxed break-words"
-              style={{ fontSize: "clamp(14px, min(1.25vw, 2.22vh), 48px)" }}
+              className="text-trim font-sans font-bold text-white leading-relaxed break-words"
+              style={{ fontSize: "clamp(15px, min(1.4vw, 2.5vh), 52px)" }}
             >
               {displayedEvent.desc}
             </p>
@@ -140,73 +127,34 @@ export function EventOverlay({ event, onAcknowledge }: EventOverlayProps) {
           {/* CONFIRM */}
           <div
             className="shrink-0"
-            style={{ padding: "clamp(10px, min(1.25vw, 2.22vh), 48px)" }}
+            style={{ padding: "clamp(12px, min(1.25vw, 2.22vh), 48px)" }}
           >
             {wipeState === "visible" ? (
               <button
                 onClick={handleAcknowledge}
-                className="w-full bg-event font-pixel font-bold text-[#0F0F1A] tracking-widest hover:bg-[#FFDA4D] transition-colors"
+                className="text-trim flex w-full items-center justify-center gap-[0.6em] bg-event font-pixel font-bold tracking-widest text-[#0F0F1A] transition-colors hover:bg-event-hover"
                 style={{
-                  padding:
-                    "clamp(12px, min(1.04vw, 1.85vh), 40px) clamp(12px, 1.67vw, 64px)",
-                  fontSize: "clamp(12px, min(0.94vw, 1.67vh), 36px)",
+                  padding: "clamp(14px, min(1.2vw, 2.1vh), 44px) clamp(12px, 1.67vw, 64px)",
+                  fontSize: "clamp(14px, min(1.1vw, 2vh), 40px)",
                 }}
               >
-                ACKNOWLEDGE →
+                GOT IT <ArrowIcon />
               </button>
             ) : (
-              <div
-                style={{ height: "clamp(44px, min(4.5vw, 6.3vh), 140px)" }}
-              />
+              <div style={{ height: "clamp(48px, min(4.5vw, 6.3vh), 140px)" }} />
             )}
           </div>
         </div>
       )}
-
-      {/* EXISTING DITHER WIPE */}
+      {/* ENTRANCE ANIMATION */}
       {(wipeState === "entering" || wipeState === "leaving") && (
-        <div
-          className={`absolute inset-0 z-20 overflow-visible ${
-            wipeState === "entering" ? "dither-wipe-in" : "dither-wipe-out"
-          }`}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundColor: "#F5C518",
-            }}
-          />
-
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              width: "clamp(60px, 5.83vw, 224px)",
-
-              right:
-                wipeState === "entering"
-                  ? "calc(-1 * clamp(60px, 5.83vw, 224px))"
-                  : "auto",
-
-              left:
-                wipeState === "leaving"
-                  ? "calc(-1 * clamp(60px, 5.83vw, 224px))"
-                  : "auto",
-
-              backgroundImage: `
-                linear-gradient(45deg, #F5C518 25%, transparent 25%),
-                linear-gradient(-45deg, #F5C518 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #F5C518 75%),
-                linear-gradient(-45deg, transparent 75%, #F5C518 75%)
-              `,
-
-              backgroundSize:
-                "clamp(10px, 0.83vw, 32px) clamp(10px, 0.83vw, 32px)",
-              backgroundPosition: "0 0, 0 50%, 50% -50%, -50% 0",
-            }}
-          />
-        </div>
+        <Wipe
+          key={wipeState}
+          tone="text-event"
+          duration={1100}
+          reverse={wipeState === "leaving"}
+          label={wipeState === "entering" ? "◆ DRAFT EVENT ◆" : undefined}
+        />
       )}
     </div>
   );

@@ -8,6 +8,14 @@ const MAX_ROWS = 6;
 const GROUP_GAP = 8;
 const CARD_GAP = 6;
 const FRAME_PADDING = 6;
+const STATUS_COLOR: Record<string, string> = {
+  READY: "#F5C518",
+  AVAILABLE: "#B8ABC9",
+  BANNED: "#FF6C77",
+  LOCKED: "#8B759F",
+};
+const LOCKED_TEXTURE =
+  "repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,108,119,0.12) 8px 10px)";
 
 type Selection =
   | "none"
@@ -30,7 +38,6 @@ interface AgentPoolProps {
   onClick: (agent: Agent) => void;
   onConfirm?: (agent: Agent) => void;
   confirmLabel?: string;
-  confirmColor?: string;
 }
 
 export function AgentPool({
@@ -46,7 +53,6 @@ export function AgentPool({
   onClick,
   onConfirm,
   confirmLabel,
-  confirmColor,
 }: AgentPoolProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [availableWidth, setAvailableWidth] = useState(0);
@@ -60,6 +66,7 @@ export function AgentPool({
       CLASS_GROUPS.map((group) => ({
         ...group,
         agents: agents.filter((a) => group.specialties.includes(a.specialty)),
+        parts: group.label.split("/").map((part) => part.trim().toUpperCase()),
       })),
     [agents],
   );
@@ -107,25 +114,25 @@ export function AgentPool({
 
   const byWidth = wideLayout
     ? Math.floor(
-        (availableWidth -
-          (groups.length - 1) * GROUP_GAP -
-          groups.length * (FRAME_PADDING * 2 + 4) -
-          (totalCardColumns - groups.length) * CARD_GAP) /
-          totalCardColumns,
-      )
+      (availableWidth -
+        (groups.length - 1) * GROUP_GAP -
+        groups.length * (FRAME_PADDING * 2 + 4) -
+        (totalCardColumns - groups.length) * CARD_GAP) /
+      totalCardColumns,
+    )
     : Math.floor(
-        ((availableWidth - (divisionColumns - 1) * GROUP_GAP) /
-          divisionColumns -
-          FRAME_PADDING * 2 -
-          4 -
-          (desiredAgentColumns - 1) * CARD_GAP) /
-          desiredAgentColumns,
-      );
+      ((availableWidth - (divisionColumns - 1) * GROUP_GAP) /
+        divisionColumns -
+        FRAME_PADDING * 2 -
+        4 -
+        (desiredAgentColumns - 1) * CARD_GAP) /
+      desiredAgentColumns,
+    );
 
   const divisionRows = Math.ceil(groups.length / divisionColumns);
   // The preview grows when card rows leave extra vertical space available.
   const headerHeight = wideLayout
-    ? Math.max(82, Math.min(148, Math.floor(spaceBelowTop * 0.15)))
+    ? Math.max(72, Math.min(110, Math.floor(spaceBelowTop * 0.135)))
     : 80;
   const verticalChrome = headerHeight + divisionRows * (61 + GROUP_GAP);
   const heightForCards = Math.max(0, spaceBelowTop - verticalChrome);
@@ -138,6 +145,17 @@ export function AgentPool({
   const previewSize = wideLayout
     ? Math.max(52, Math.min(118, headerHeight - 22))
     : 52;
+
+  // One label size for every section: the longest word has to fit the narrowest section.
+  const narrowestSection = Math.min(
+    ...groupCardColumns.map((n) => n * actualSize + (n - 1) * CARD_GAP),
+  );
+  const longestWord = Math.max(...groups.flatMap((g) => g.parts.map((p) => p.length)));
+  const labelSize = Math.max(
+    9,
+    Math.min(16, Math.floor(narrowestSection / (longestWord * 0.9))),
+  );
+  const labelLines = Math.max(...groups.map((g) => g.parts.length));
 
   const selectedAgent = agents.find((a) =>
     selection?.(a).startsWith("selected"),
@@ -152,19 +170,23 @@ export function AgentPool({
     : false;
   const highlightedLocked = highlightedAgent
     ? unavailableGroups.some((label) =>
-        groups
-          .find((g) => g.label === label)
-          ?.agents.some((a) => a.id === highlightedAgent.id),
-      ) ||
-      (!showBanOverlay && highlightedBanned) ||
-      !!unavailableFn?.(highlightedAgent)
+      groups
+        .find((g) => g.label === label)
+        ?.agents.some((a) => a.id === highlightedAgent.id),
+    ) ||
+    (!showBanOverlay && highlightedBanned) ||
+    !!unavailableFn?.(highlightedAgent)
     : false;
-  const highlightColor =
-    highlightedSelection.endsWith("p1") || highlightedSelection === "p1"
-      ? "#3A8EF6"
-      : highlightedSelection.endsWith("p2") || highlightedSelection === "p2"
-        ? "#E63946"
-        : "#F5C518";
+  const status = highlightedAgent
+    ? highlightedBanned
+      ? "BANNED"
+      : highlightedLocked
+        ? "LOCKED"
+        : highlightedSelection.startsWith("selected")
+          ? "READY"
+          : "AVAILABLE"
+    : `${agents.length} AGENTS`;
+  const statusColor = STATUS_COLOR[status] ?? "#8B759F";
 
   const renderAgent = (a: Agent, groupLocked: boolean) => {
     const isBanned = banned.includes(a.id);
@@ -189,14 +211,13 @@ export function AgentPool({
               : undefined
           }
           confirmLabel={confirmLabel}
-          confirmColor={confirmColor}
           size={actualSize}
         />
       </div>
     );
   };
 
-  // Reduced detail mode available to other phases with identical behavior (currently: ScoreSubmit).
+  // Reduced detail mode available to other phases with identical behavior.
   if (flat) {
     return (
       <div className="flex flex-wrap gap-1 justify-center">
@@ -223,98 +244,92 @@ export function AgentPool({
   return (
     <div
       ref={containerRef}
-      className="responsive-agent-pool w-full min-w-0"
+      className="responsive-agent-pool w-full min-w-0 mx-auto max-w-[calc(100%-1.5rem)] select-none"
       style={{ color: "#EEEAF5" }}
     >
-      {/* Fixed-position preview on the left, title on the right. */}
       <div
-        className="flex min-w-0 items-center gap-3 border-b-4 border-[#7962A1] bg-[#1A1728] px-[clamp(8px,.8vw,22px)] py-[clamp(5px,.4vw,12px)]"
-        style={{ minHeight: wideLayout ? headerHeight : undefined }}
+        className="relative flex min-w-0 items-stretch gap-[clamp(8px,.8vw,22px)] overflow-hidden border-b-4 bg-plate pr-[clamp(24px,1.5vw,64px)]"
+        style={{
+          minHeight: wideLayout ? headerHeight : undefined,
+          borderColor: status === "READY" ? "#F5C518" : "#7962A1",
+          backgroundImage:
+            "linear-gradient(90deg, #1A1728 30%, transparent 75%), repeating-linear-gradient(135deg, transparent 0 10px, rgba(121,98,161,0.14) 10px 12px)",
+        }}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <div
-            className="relative hidden shrink-0 overflow-hidden bg-[#292036] sm:block"
-            style={{ width: previewSize, height: previewSize }}
-          >
-            {highlightedAgent ? (
-              <img
-                src={`/agents/agents_full/${highlightedAgent.id}_full.webp`}
-                alt={highlightedAgent.name}
-                className="absolute inset-0 h-full w-full object-cover object-top"
-                onError={(e) => {
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = `/agents/${highlightedAgent.id}.webp`;
-                }}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center font-pixel text-[#8B759F]">
-                ?
-              </div>
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div
-              className="truncate font-pixel text-white"
-              style={{ fontSize: "clamp(11px,.9vw,26px)" }}
-            >
-              {highlightedAgent?.name.toUpperCase() ?? "SELECT AN AGENT"}
-            </div>
-            <div
-              className="truncate font-mono font-bold text-[#B8ABC9]"
-              style={{ fontSize: "clamp(10px,.65vw,18px)" }}
-            >
-              {highlightedAgent
-                ? `${highlightedAgent.specialty.toUpperCase()} / ${highlightedAgent.faction.toUpperCase()}`
-                : "HOVER TO INSPECT"}
-            </div>
-            <div
-              className="truncate font-pixel md:hidden"
-              style={{
-                color: highlightColor,
-                fontSize: "clamp(9px,.6vw,16px)",
+        <div
+          className="relative hidden shrink-0 overflow-hidden bg-chip sm:block"
+          style={{
+            width: previewSize + 24,
+            clipPath: "polygon(0% 0%, 100% 0%, 88% 100%, 0% 100%)",
+          }}
+        >
+          {highlightedAgent ? (
+            <img
+              src={`/agents/agents_full/${highlightedAgent.id}_full.webp`}
+              alt={highlightedAgent.name}
+              className="absolute inset-0 h-full w-full object-cover object-top"
+              onError={(e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = `/agents/${highlightedAgent.id}.webp`;
               }}
-            >
-              {highlightedAgent
-                ? highlightedBanned
-                  ? "BANNED"
-                  : highlightedLocked
-                    ? "LOCKED"
-                    : highlightedSelection.startsWith("selected")
-                      ? "READY"
-                      : "AVAILABLE"
-                : `${agents.length} AGENTS`}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center font-pixel text-lavender">
+              ?
             </div>
-          </div>
-          <div
-            className="hidden shrink-0 font-pixel md:block"
-            style={{
-              color: highlightColor,
-              fontSize: "clamp(10px,.65vw,18px)",
-            }}
-          >
-            {highlightedAgent
-              ? highlightedBanned
-                ? "BANNED"
-                : highlightedLocked
-                  ? "LOCKED"
-                  : highlightedSelection.startsWith("selected")
-                    ? "READY"
-                    : "AVAILABLE"
-              : `${agents.length} AGENTS`}
-          </div>
+          )}
         </div>
-        <div className="shrink-0 border-l-2 border-[#463C59] pl-3 text-right">
+        <div className="relative flex min-w-0 flex-1 flex-col justify-center gap-[clamp(3px,.3vw,8px)] py-[clamp(5px,.4vw,12px)]">
           <div
-            className="font-pixel text-[#E4D4FF]"
-            style={{ fontSize: "clamp(11px,.85vw,23px)" }}
+            className="text-trim font-pixel text-lavender"
+            style={{ fontSize: "clamp(8px,.5vw,14px)" }}
           >
             AGENT SELECT
           </div>
+          <div
+            className="text-trim truncate font-pixel text-white"
+            style={{ fontSize: "clamp(13px,1.2vw,32px)" }}
+          >
+            {highlightedAgent?.name.toUpperCase() ?? "SELECT AN AGENT"}
+          </div>
+          <div className="flex min-w-0 gap-[clamp(4px,.3vw,8px)]">
+            {highlightedAgent ? (
+              [highlightedAgent.specialty, highlightedAgent.faction].map(
+                (label) => (
+                  <span
+                    key={label}
+                    className="text-trim truncate border border-chrome bg-chip px-[clamp(5px,.4vw,12px)] py-[clamp(3px,.25vw,7px)] font-sans font-bold text-lavender-light"
+                    style={{ fontSize: "clamp(10px,.65vw,18px)" }}
+                  >
+                    {label.toUpperCase()}
+                  </span>
+                ),
+              )
+            ) : (
+              <span
+                className="text-trim font-sans font-bold text-lavender"
+                style={{ fontSize: "clamp(10px,.65vw,18px)" }}
+              >
+                HOVER TO INSPECT
+              </span>
+            )}
+          </div>
+        </div>
+        <div
+          className="text-trim relative shrink-0 self-center border-2 px-[clamp(8px,.7vw,20px)] py-[clamp(5px,.4vw,11px)] font-pixel"
+          style={{
+            color: statusColor,
+            borderColor: statusColor,
+            backgroundColor: statusColor + "1A",
+            fontSize: "clamp(10px,.7vw,20px)",
+          }}
+        >
+          {status}
         </div>
       </div>
 
       <div
-        className="grid items-start"
+        className="grid items-stretch"
         style={{
           gridTemplateColumns: wideLayout
             ? groupCardColumns.map((n) => `${n}fr`).join(" ")
@@ -329,54 +344,35 @@ export function AgentPool({
           return (
             <section
               key={group.label}
-              className="min-w-0 border-2 border-[#463C59] bg-[#191624]"
-              style={{ opacity: groupLocked ? 0.8 : 1 }}
+              className="flex min-w-0 flex-col border-2 border-chrome bg-plate"
             >
               {showHeaders && (
-                <div className="relative flex min-h-[48px] items-center justify-center border-b-2 border-[#66547D] bg-[#30263D] px-1 py-1 text-center">
+                <div
+                  className={`flex items-center justify-center border-b-2 px-1 text-center ${
+                    groupLocked
+                      ? "border-p2-alt2/60 bg-ink"
+                      : "border-chrome-strong bg-chrome-fill"
+                  }`}
+                  style={{
+                    fontSize: labelSize,
+                    height: `calc(${labelLines}em + ${(labelLines - 1) * 0.4}em + 1.4em)`,
+                    backgroundImage: groupLocked ? LOCKED_TEXTURE : undefined,
+                  }}
+                >
                   <span
-                    className="absolute left-1 top-1 font-mono font-bold text-[#CBA6F1]"
-                    style={{ fontSize: "clamp(8px,.48vw,13px)" }}
+                    className={`flex flex-col items-center gap-[0.4em] font-pixel font-bold leading-none ${
+                      groupLocked ? "text-lavender" : "text-white"
+                    }`}
                   >
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <span
-                    className="flex min-w-0 flex-col items-center justify-center gap-0.5 px-1 font-pixel text-white leading-tight"
-                    style={{
-                      fontSize:
-                        group.label.toLowerCase().includes("rupture") &&
-                        group.label.toLowerCase().includes("armorer")
-                          ? "clamp(8px, .53vw, 16px)"
-                          : "clamp(11px, .85vw, 25px)",
-                    }}
-                  >
-                    {group.label.toLowerCase().includes("support") &&
-                    group.label.toLowerCase().includes("defense") ? (
-                      <span className="whitespace-nowrap">
-                        SUPPORT — DEFENSE
+                    {group.parts.map((part) => (
+                      <span key={part} className="text-trim whitespace-nowrap">
+                        {part}
                       </span>
-                    ) : (
-                      group.label.split("/").map((part, partIndex) => (
-                        <span
-                          key={partIndex}
-                          className="block whitespace-nowrap"
-                        >
-                          {part.trim().toUpperCase()}
-                        </span>
-                      ))
-                    )}
+                    ))}
                   </span>
-                  {groupLocked && (
-                    <span
-                      className="absolute right-1 top-1 font-mono text-[#FF9099]"
-                      style={{ fontSize: "clamp(8px,.48vw,13px)" }}
-                    >
-                      LOCK
-                    </span>
-                  )}
                 </div>
               )}
-              <div className="p-3" style={{ padding: FRAME_PADDING }}>
+              <div className="flex-1" style={{ padding: FRAME_PADDING }}>
                 <div
                   className="grid justify-center"
                   style={{

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { Agent, PlayerId } from "../types";
 import { CLASS_GROUPS } from "../Data/modes";
 import { AgentCard } from "./AgentCard";
+import { Panel } from "./Panel";
+import { CloseIcon } from "./Icons";
 
 interface MorphPickerProps {
   item: Agent; // the Soul Stone / Invitation being used
@@ -13,6 +15,20 @@ interface MorphPickerProps {
   currentId?: string; // the form already chosen, if the player reopens the popup
   onPick: (agentId: string) => void;
   onClose: () => void;
+}
+
+const TEXTURE =
+  "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.05) 10px 12px)";
+
+
+function useCardSize() {
+  const [width, setWidth] = useState(() => window.innerWidth);
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return Math.round(Math.max(72, Math.min(width * 0.055, 150)));
 }
 
 // Popup for Soul Stone / Soul Stone+ / Invitations. Click an agent, then confirm.
@@ -30,10 +46,8 @@ export function MorphPicker({
   const [selectedId, setSelectedId] = useState<string | null>(
     currentId ?? null,
   );
+  const cardSize = useCardSize();
   const isP1 = player === "p1";
-  const accent = isP1 ? "text-p1" : "text-p2";
-  const border = isP1 ? "border-p1" : "border-p2";
-  const background = isP1 ? "bg-p1" : "bg-p2";
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -51,84 +65,129 @@ export function MorphPicker({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/85 p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={`${item.name}: choose an agent`}
     >
-      <div
-        className={`flex max-h-[90vh] w-full max-w-4xl flex-col border-t-4 ${border} bg-[#141420]`}
+      <Panel
+        className={`flex max-h-[88vh] w-[min(94vw,1500px)] flex-col border-l-[6px] ${isP1 ? "border-l-p1" : "border-l-p2"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#303044] px-5 py-4">
-          <div className="min-w-0">
-            <div className={`font-pixel text-lg ${accent}`}>
-              {playerName.toUpperCase()} · {item.name.toUpperCase()}
+        <div className="flex items-center justify-between gap-6 border-b-2 border-chrome px-6 py-5">
+          <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <span
+                className={`text-trim px-[0.7em] py-[0.5em] font-pixel font-bold text-ink text-[clamp(10px,0.75vw,18px)] ${isP1 ? "bg-p1" : "bg-p2"}`}
+              >
+                {playerName.toUpperCase()}
+              </span>
+              <span className="text-trim font-pixel font-bold text-bright text-[clamp(18px,1.6vw,40px)]">
+                {item.name.toUpperCase()}
+              </span>
             </div>
-            <div className="mt-1 text-xs text-text-muted">{note}</div>
+            <span className="text-trim text-text-primary text-[clamp(13px,1vw,24px)]">
+              {note}
+            </span>
           </div>
           <button
             onClick={onClose}
-            className="font-pixel text-sm text-text-muted hover:text-text-primary"
+            className="flex h-[2.6em] w-[2.6em] shrink-0 items-center justify-center border-2 border-chrome text-[clamp(12px,0.9vw,22px)] text-lavender-light transition-colors hover:border-event hover:text-event"
             aria-label="Close"
           >
-            ✕
+            <CloseIcon />
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
-          {groups.map((g) => (
-            <div key={g.label}>
-              <div className="mb-2 font-pixel text-[10px] tracking-widest text-text-muted">
-                {g.label.toUpperCase()}
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_clamp(240px,21vw,440px)]">
+          <div className="arcade-scroll min-h-0 space-y-6 overflow-y-auto px-6 py-5">
+            {groups.map((g) => (
+              <section key={g.label} className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-trim shrink-0 font-pixel text-[clamp(11px,0.85vw,20px)] tracking-widest text-lavender-light">
+                    {g.label.toUpperCase()}
+                  </span>
+                  <span className="h-[2px] flex-1 bg-chrome" />
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {g.agents.map((agent) => (
+                    <div key={agent.id} className="relative" title={agent.name}>
+                      <AgentCard
+                        agent={agent}
+                        size={cardSize}
+                        selection={
+                          selectedId === agent.id
+                            ? isP1
+                              ? "selected-p1"
+                              : "selected-p2"
+                            : "none"
+                        }
+                        onClick={() => setSelectedId(agent.id)}
+                      />
+                      {banned.includes(agent.id) && (
+                        <span
+                          className="text-trim pointer-events-none absolute inset-x-0 bottom-0 bg-ink/90 py-[0.5em] text-center font-pixel text-p2-alt2"
+                          style={{ fontSize: Math.max(9, Math.round(cardSize * 0.11)) }}
+                        >
+                          BANNED
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ))}
+            {groups.length === 0 && (
+              <div className="text-trim font-pixel text-[clamp(12px,1vw,24px)] text-lavender">
+                NO AGENTS AVAILABLE
               </div>
-              <div className="flex flex-wrap gap-3">
-                {g.agents.map((agent) => (
-                  <div key={agent.id} className="relative" title={agent.name}>
-                    <AgentCard
-                      agent={agent}
-                      size={96}
-                      selection={
-                        selectedId === agent.id
-                          ? isP1
-                            ? "selected-p1"
-                            : "selected-p2"
-                          : "none"
-                      }
-                      onClick={() => setSelectedId(agent.id)}
-                    />
-                    {banned.includes(agent.id) && (
-                      <span className="pointer-events-none absolute left-0 top-0 bg-[#802027] px-1 font-pixel text-[8px] leading-tight text-white">
-                        BANNED
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          {groups.length === 0 && (
-            <div className="font-pixel text-sm text-text-muted">
-              NO AGENTS AVAILABLE
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <div className="border-t border-[#303044] px-5 py-4">
-          <button
-            disabled={!selected}
-            onClick={() => selected && onPick(selected.id)}
-            className={`w-full py-4 font-pixel text-sm font-bold tracking-widest text-white ${background} ${
-              selected ? "hover:opacity-80" : "cursor-not-allowed opacity-20"
-            }`}
-          >
-            {selected
-              ? `BECOME ${selected.name.toUpperCase()}`
-              : "SELECT AN AGENT"}
-          </button>
+          <div className="flex flex-col gap-4 border-t-2 border-chrome p-5 lg:border-l-2 lg:border-t-0">
+            <div
+              className="relative hidden aspect-square w-full overflow-hidden border-2 border-chrome-strong bg-chrome lg:block"
+              style={{ backgroundImage: TEXTURE }}
+            >
+              {selected ? (
+                <img
+                  key={selected.id}
+                  src={`/agents/agents_full/${selected.art ?? selected.id}_full.webp`}
+                  alt={selected.name}
+                  draggable={false}
+                  className="h-full w-full object-cover object-top"
+                />
+              ) : (
+                <span className="absolute inset-0 flex select-none items-center justify-center font-lexend text-[clamp(60px,7vw,160px)] font-black text-ink">
+                  ?
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-trim font-pixel tracking-widest text-lavender text-[clamp(10px,0.75vw,18px)]">
+                {selected ? selected.specialty.toUpperCase() : "NEW FORM"}
+              </span>
+              <span className="text-trim break-words font-pixel font-bold text-bright text-[clamp(16px,1.4vw,34px)]">
+                {selected ? selected.name.toUpperCase() : "???"}
+              </span>
+            </div>
+
+            <button
+              disabled={!selected}
+              onClick={() => selected && onPick(selected.id)}
+              className={`text-trim mt-auto w-full py-5 font-pixel font-bold tracking-widest text-[clamp(13px,1vw,26px)] transition-colors ${
+                selected
+                  ? "bg-event text-ink hover:bg-event-hover"
+                  : "cursor-not-allowed border-2 border-chrome bg-chrome-fill text-lavender"
+              }`}
+            >
+              {selected ? "CONFIRM FORM" : "SELECT AN AGENT"}
+            </button>
+          </div>
         </div>
-      </div>
+      </Panel>
     </div>
   );
 }

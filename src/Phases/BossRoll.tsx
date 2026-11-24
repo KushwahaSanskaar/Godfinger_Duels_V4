@@ -1,162 +1,226 @@
 import type { Boss } from "../Data/bosses";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BOSS_POOL } from "../Data/bosses";
-import { roundLabel } from "../Data/modes";
+import { ArrowIcon } from "../Components/Icons";
+import { Panel } from "../Components/Panel";
+import { Wipe } from "../Components/Wipe";
 
 interface BossRollProps {
   currentBoss: Boss | null;
-  round: number;
-  totalRounds: number;
   onRoll: () => void;
   onContinue: () => void;
 }
 
 type RevealState = "ready" | "rolling" | "revealed";
 
-export function BossRoll({
-  currentBoss,
-  round,
-  totalRounds,
-  onRoll,
-  onContinue,
-}: BossRollProps) {
+const HAZARD_STRIPES =
+  "repeating-linear-gradient(135deg, #F5C518 0 14px, #141420 14px 28px)";
+const TEXTURE =
+  "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.05) 10px 12px)";
+const WIPE_MS = 800;
+const WIPE_SWAP_MS = 400;
+const LABEL_SIZE = "clamp(10px, 0.8vw, 20px)";
+const BUTTON =
+  "text-trim flex w-full items-center justify-center gap-[0.6em] py-5 px-4 font-pixel font-bold tracking-wider text-[clamp(14px,1.1vw,28px)]";
+const FADE_LEFT = "linear-gradient(to right, transparent, black 70%)";
+const FADE_RIGHT = "linear-gradient(to left, transparent, black 70%)";
+
+
+function buildRollSequence(order: Boss[], target: Boss, frames: number): Boss[] {
+  const end = order.findIndex((b) => b.id === target.id);
+  return Array.from(
+    { length: frames + 1 },
+    (_, i) =>
+      order[(((end - frames + i) % order.length) + order.length) % order.length],
+  );
+}
+
+export function BossRoll({ currentBoss, onRoll, onContinue }: BossRollProps) {
   const [revealState, setRevealState] = useState<RevealState>("ready");
-  const [displayedName, setDisplayedName] = useState("???");
+  const [displayedBoss, setDisplayedBoss] = useState<Boss | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
+  const [wiping, setWiping] = useState(false);
+  const orderRef = useRef<Boss[]>(BOSS_POOL);
 
   useEffect(() => {
+    setImageFailed(false);
+    setWiping(false);
     if (!currentBoss) {
       setRevealState("ready");
-      setDisplayedName("???");
-      setImageFailed(false);
+      setDisplayedBoss(null);
       return;
     }
 
     setRevealState("rolling");
-    setImageFailed(false);
 
     const delays = [
-      70, 75, 80, 90, 100, 115, 130, 150, 175, 205, 240, 285, 335,
+      70, 75, 80, 90, 100, 115, 130, 150, 175, 205, 240, 285, 335, 420,
     ];
+    const order = [...BOSS_POOL].sort(() => Math.random() - 0.5);
+    orderRef.current = order;
+    const sequence = buildRollSequence(order, currentBoss, delays.length - 1);
     let index = 0;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    let cancelled = false;
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     const tick = () => {
-      if (cancelled) return;
       if (index >= delays.length) {
-        setDisplayedName(currentBoss.name);
-        setRevealState("revealed");
+        setWiping(true);
+        timers.push(
+          setTimeout(() => {
+            setDisplayedBoss(currentBoss);
+            setRevealState("revealed");
+          }, WIPE_SWAP_MS),
+          setTimeout(() => setWiping(false), WIPE_MS),
+        );
         return;
       }
-      setDisplayedName(BOSS_POOL[index % BOSS_POOL.length].name);
-      timeoutId = setTimeout(tick, delays[index]);
+      setDisplayedBoss(sequence[index]);
+      timers.push(setTimeout(tick, delays[index]));
       index += 1;
     };
 
     tick();
-    return () => {
-      cancelled = true;
-      if (timeoutId !== undefined) clearTimeout(timeoutId);
-    };
+    return () => timers.forEach(clearTimeout);
   }, [currentBoss]);
 
   const revealed = revealState === "revealed" && !!currentBoss;
+  const status =
+    revealState === "ready"
+      ? "AWAITING ROLL"
+      : revealed
+        ? "BOSS CONFIRMED"
+        : "ROLLING...";
+
+  const order = orderRef.current;
+  const at = displayedBoss
+    ? order.findIndex((b) => b.id === displayedBoss.id)
+    : -1;
+  const sideName = (offset: number) =>
+    at < 0
+      ? ""
+      : order[(at + offset + order.length) % order.length].name.toUpperCase();
 
   return (
-    <div className="w-full flex flex-col gap-5 py-3">
-      <div className="flex flex-col items-center gap-1 text-center">
-        <span className="font-pixel text-lg text-text-primary">
-          {roundLabel(round, totalRounds)}
-        </span>
-        <span className="font-pixel text-sm text-text-muted tracking-widest">
-          BOSS ENCOUNTER
-        </span>
-      </div>
-
-      <section className="w-full bg-[#141420] border-t-4 border-[#F5C518] p-5 md:p-8">
-        <div className="flex items-center justify-between gap-3 border-b-2 border-[#3B3449] pb-4">
-          <span className="font-pixel text-xs md:text-sm text-[#F5C518]">
-            ◆ ENCOUNTER ROULETTE
-          </span>
-          <span className="font-pixel text-[10px] md:text-xs text-[#B8A8C8]">
-            {revealState === "ready"
-              ? "AWAITING ROLL"
-              : revealed
-                ? "BOSS CONFIRMED"
-                : "ROLLING..."}
+    <div className="w-full py-3">
+      <Panel className="flex flex-col">
+        <div
+          className="flex h-[clamp(22px,1.6vw,44px)] items-center justify-center"
+          style={{ backgroundImage: HAZARD_STRIPES }}
+        >
+          <span
+            className="bg-ink px-[1.2em] py-[0.5em] font-pixel tracking-widest text-event"
+            style={{ fontSize: LABEL_SIZE }}
+          >
+            ◆ WARNING ◆
           </span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] items-center gap-5 md:gap-8 py-6">
-          {/* Boss illustration */}
-          <div className="relative w-full max-w-[min(72vw,40vh)] lg:w-[min(34vw,43vh,640px)] lg:max-w-none aspect-[121/167] mx-auto overflow-hidden bg-[#221B31] border-2 border-[#68517C] flex items-center justify-center">
-            {revealed && !imageFailed ? (
-              <img
-                key={currentBoss.id}
-                src={`/bosses/${currentBoss.id}.webp`}
-                alt={currentBoss.name}
-                loading="eager"
-                className="absolute inset-0 w-full h-full object-contain"
-                onError={() => setImageFailed(true)}
-              />
+        <div className="flex items-center justify-between gap-3 border-b-2 border-chrome px-5 py-4 md:px-8">
+          <span className="text-trim font-pixel text-[clamp(12px,0.95vw,26px)] text-event">
+            ◆ ENCOUNTER ROULETTE
+          </span>
+          <span className="text-trim font-pixel text-[clamp(10px,0.8vw,22px)] text-lavender-light">
+            {status}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 items-center gap-5 p-5 md:gap-8 md:p-8 lg:grid-cols-[auto_minmax(0,1fr)]">
+          <div
+            className="relative mx-auto flex aspect-[121/167] w-full max-w-[min(72vw,40vh)] items-center justify-center overflow-hidden border-2 border-chrome-strong bg-chrome lg:w-[min(34vw,43vh,640px)] lg:max-w-none"
+            style={{ backgroundImage: TEXTURE }}
+          >
+            {displayedBoss && !imageFailed ? (
+              revealed ? (
+                <img
+                  key={displayedBoss.id}
+                  src={`/bosses/${displayedBoss.id}.webp`}
+                  alt={displayedBoss.name}
+                  loading="eager"
+                  draggable={false}
+                  className="absolute inset-0 h-full w-full object-contain"
+                  onError={() => setImageFailed(true)}
+                />
+              ) : (
+                <div
+                  className="absolute inset-0 bg-plate"
+                  style={{
+                    WebkitMaskImage: `url(/bosses/${displayedBoss.id}.webp)`,
+                    maskImage: `url(/bosses/${displayedBoss.id}.webp)`,
+                    WebkitMaskSize: "contain",
+                    maskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
+                  }}
+                />
+              )
             ) : (
-              <span className="font-pixel text-7xl md:text-9xl text-[#705B83] select-none">
-                {revealed ? "!" : "?"}
+              <span className="select-none font-lexend text-7xl font-black text-ink md:text-9xl">
+                ?
               </span>
             )}
-            <div className="absolute left-0 top-0 bg-[#F5C518] px-4 py-2 font-pixel text-[10px] text-[#141420]">
+            {wiping && <Wipe tone="text-event" duration={WIPE_MS} />}
+            <div
+              className="text-trim absolute left-0 top-0 bg-event px-[1.4em] py-[0.9em] font-pixel text-ink"
+              style={{ fontSize: LABEL_SIZE }}
+            >
               {revealed ? "TARGET IDENTIFIED" : "UNKNOWN TARGET"}
             </div>
           </div>
 
-          {/* Roulette and controls */}
-          <div className="min-w-0 flex flex-col justify-center gap-5">
-            <div className="text-center lg:text-left">
-              <span className="font-pixel text-xs text-[#F5C518] tracking-widest">
-                ◆ WARNING ◆
-              </span>
-              <h1
-                className="mt-3 font-pixel text-3xl md:text-5xl text-white leading-tight"
-                style={{ textShadow: "4px 4px 0 #785C19" }}
+          <div className="flex min-w-0 flex-col justify-center gap-5">
+            <Panel className="flex min-h-[clamp(150px,12vw,300px)] flex-1 flex-col items-center justify-center gap-4 overflow-hidden border-event py-8 text-center !bg-event-plate">
+              <span
+                className="text-trim font-pixel tracking-widest text-event"
+                style={{ fontSize: LABEL_SIZE }}
               >
-                BOSS ENCOUNTER
-              </h1>
-            </div>
-
-            <div className="border-2 border-[#F5C518] bg-[#20192C] px-4 py-8 text-center min-h-[142px] flex flex-col items-center justify-center gap-3">
-              <span className="font-pixel text-[10px] text-[#D8B54D] tracking-widest">
                 {revealed
                   ? "ENCOUNTER REVEALED"
                   : revealState === "rolling"
                     ? "SELECTING TARGET..."
                     : "UNKNOWN ENCOUNTER"}
               </span>
-              <span
-                key={displayedName}
-                className="font-mono font-bold text-2xl md:text-4xl text-white break-words leading-tight"
+              <div className="mx-auto grid w-fit max-w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center font-pixel font-bold leading-tight text-[clamp(22px,2.6vw,64px)]">                <div
+                className="flex min-w-0 justify-end overflow-hidden"
+                style={{ WebkitMaskImage: FADE_LEFT, maskImage: FADE_LEFT }}
               >
-                {displayedName.toUpperCase()}
-              </span>
-            </div>
+                <span className="text-trim whitespace-nowrap text-[0.5em] text-bright opacity-30">
+                  {sideName(-1)}
+                </span>
+              </div>
+                <span className="text-trim min-w-0 break-words px-[0.5em] text-white">
+                  {(displayedBoss?.name ?? "???").toUpperCase()}
+                </span>
+                <div
+                  className="flex min-w-0 justify-start overflow-hidden"
+                  style={{ WebkitMaskImage: FADE_RIGHT, maskImage: FADE_RIGHT }}
+                >
+                  <span className="text-trim whitespace-nowrap text-[0.5em] text-bright opacity-30">
+                    {sideName(1)}
+                  </span>
+                </div>
+              </div>
+            </Panel>
 
             {revealState === "ready" ? (
               <button
                 onClick={onRoll}
-                className="w-full bg-[#F5C518] hover:bg-[#FFDA4D] text-[#141420] font-pixel text-base md:text-lg py-5 px-4"
+                className={`${BUTTON} bg-event text-ink hover:bg-event-hover`}
               >
                 ROLL BOSS
               </button>
             ) : revealed ? (
               <button
                 onClick={onContinue}
-                className="w-full bg-[#F5C518] hover:bg-[#FFDA4D] text-[#141420] font-pixel text-sm md:text-lg py-5 px-4"
+                className={`${BUTTON} bg-event text-ink hover:bg-event-hover`}
               >
-                BEGIN SQUAD SELECTION →
+                BEGIN SQUAD SELECTION
+                <ArrowIcon />
               </button>
             ) : (
               <div
-                className="w-full border-2 border-[#65502A] bg-[#2C2431] text-[#D8BA73] text-center font-pixel text-sm md:text-lg py-5 px-4"
+                className={`${BUTTON} border-2 border-chrome bg-chrome-fill text-lavender-light`}
                 aria-live="off"
               >
                 ROLLING...
@@ -164,7 +228,7 @@ export function BossRoll({
             )}
           </div>
         </div>
-      </section>
+      </Panel>
     </div>
   );
 }

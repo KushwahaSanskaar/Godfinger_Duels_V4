@@ -18,29 +18,38 @@ export interface ModifierDef {
 export type ModifierId =
   | "tunnel-vision"
   | "puppeteer"
-  | "preset-teams"
+  | "mirror-match"
   | "armory-swap"
   | "deja-vu";
+
+export const SECRET_HINTS = [
+  "SOMETHING UNUSUAL MIGHT HAPPEN...",
+  "SOMETHING FEELS OFF...",
+  "SOMETHING ISN'T RIGHT...",
+  "NOT EVERYTHING IS AS IT SEEMS...",
+  "SOMETHING IS ABOUT TO CHANGE...",
+  "THIS ROUND MIGHT NOT GO TO PLAN...",
+];
 
 export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
   {
     id: "tunnel-vision",
     title: "Tunnel Vision",
-    desc: "Both players are forced to use a random Agent in their current roster for the upcoming battle.",
+    desc: "Each player's squad is forced to include 1 random Agent from their current roster.",
     ready: true,
   },
   {
     id: "puppeteer",
     title: "Puppeteer",
-    desc: "For the upcoming battle, each player will select 2 Agents for themselves and choose the 3rd Agent for their opponent.",
+    desc: "Each player selects 2 Agents for their own squad, and the 3rd is selected by their opponent.",
     ready: true,
   },
   {
-    id: "preset-teams",
-    title: "Preset Teams",
+    id: "mirror-match",
+    title: "Mirror Match",
     flair: "???",
     secret: true,
-    desc: "Ironically the true mirror match. Pick your squad as usual, then a random team is rolled for both players to use for this upcoming battle. If you lose, the Agents you picked are the ones on the line.",
+    desc: "Disregard locked-in squads. Both players are assigned identical, randomly generated squads.",
     ready: true,
   },
   {
@@ -48,7 +57,7 @@ export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
     title: "Armory Swap",
     flair: "???",
     secret: true,
-    desc: "After confirming both teams, swap teams with your opponent for this combat.",
+    desc: "Swap squads with your opponent.",
     ready: true,
   },
   {
@@ -57,7 +66,7 @@ export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
     flair: "???",
     secret: true,
     minEliminated: 3,
-    desc: "Disregard the teams that were picked. A random team is rolled from the Agents that have been eliminated so far, and both players use it for this upcoming battle. The Agents you picked are still the ones on the line.",
+    desc: "Disregard locked-in squads. Both players must assemble a new squad using the opponent's eliminated Agents.",
     ready: true,
   },
 ];

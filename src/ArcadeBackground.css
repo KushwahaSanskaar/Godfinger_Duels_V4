@@ -21,36 +21,104 @@
   animation: background-drift 30s ease-in-out infinite alternate;
 }
 
+.arcade-bg {
+  --tilt: 15vh;
+  --seam: 150vw;
+  --shift: 0vw;
+  --push: linear(
+    0, 0.09, 0.174, 0.253, 0.328, 0.397, 0.462, 0.522, 0.578, 0.629,
+    0.677, 0.72, 0.76, 0.796, 0.829, 0.858, 0.885, 0.908, 0.929, 0.947,
+    0.962, 0.976, 0.987, 0.996, 1.003, 1.009, 1.013, 1.016, 1.017, 1.018,
+    1.017, 1.016, 1.014, 1.012, 1.01, 1.008, 1.005, 1.003, 1.002, 1, 1
+  );
+}
+
+.arcade-bg[data-player="p1"] {
+  --shift: 17vw;
+}
+
+.arcade-bg[data-player="p2"] {
+  --shift: -17vw;
+}
+
+.arcade-bg__front {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -100vw;
+  width: 300vw;
+  transform: translateX(var(--shift));
+  transition: transform 550ms var(--push);
+  will-change: transform;
+}
+
 .arcade-bg__color {
   position: absolute;
   inset: 0;
-  transition: clip-path 250ms steps(24, end);
 }
 
-/* P1 */
+.arcade-bg__color::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--edge);
+}
+
 .arcade-bg__color--p1 {
-  background-color: rgba(58, 142, 246, 0.1);
-
-  /* Hidden beyond the left edge */
-  clip-path: polygon(-15% 0%, -15% 0%, 0% 100%, 0% 100%);
+  --edge: #3a8ef6;
+  background: rgba(58, 142, 246, 0.09);
+  clip-path: polygon(
+    0 0,
+    calc(var(--seam) - var(--tilt) / 2) 0,
+    calc(var(--seam) + var(--tilt) / 2) 100%,
+    0 100%
+  );
 }
 
-/* P2 */
+.arcade-bg__color--p1::after {
+  clip-path: polygon(
+    calc(var(--seam) - var(--tilt) / 2 - 6px) 0,
+    calc(var(--seam) - var(--tilt) / 2) 0,
+    calc(var(--seam) + var(--tilt) / 2) 100%,
+    calc(var(--seam) + var(--tilt) / 2 - 6px) 100%
+  );
+}
+
 .arcade-bg__color--p2 {
-  background-color: rgba(230, 57, 70, 0.1);
-
-  /* Hidden beyond the right edge */
-  clip-path: polygon(100% 0%, 115% 0%, 130% 100%, 115% 100%);
+  --edge: #e63946;
+  background: rgba(230, 57, 70, 0.09);
+  clip-path: polygon(
+    calc(var(--seam) - var(--tilt) / 2) 0,
+    100% 0,
+    100% 100%,
+    calc(var(--seam) + var(--tilt) / 2) 100%
+  );
 }
 
-/* P1 LTR */
-.arcade-bg[data-player="p1"] .arcade-bg__color--p1 {
-  clip-path: polygon(-15% 0%, 100% 0%, 115% 100%, 0% 100%);
+.arcade-bg__color--p2::after {
+  clip-path: polygon(
+    calc(var(--seam) - var(--tilt) / 2) 0,
+    calc(var(--seam) - var(--tilt) / 2 + 6px) 0,
+    calc(var(--seam) + var(--tilt) / 2 + 6px) 100%,
+    calc(var(--seam) + var(--tilt) / 2) 100%
+  );
 }
 
-/* P2 RTL */
-.arcade-bg[data-player="p2"] .arcade-bg__color--p2 {
-  clip-path: polygon(-15% 0%, 100% 0%, 115% 100%, 0% 100%);
+.arcade-bg[data-player="p1"] .arcade-bg__color--p1::after,
+.arcade-bg[data-player="p2"] .arcade-bg__color--p2::after {
+  animation: edge-hit 300ms ease-out 200ms backwards;
+}
+
+@keyframes edge-hit {
+  from {
+    background: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcade-bg__front {
+    transition-duration: 1ms;
+  }
 }
 
 @keyframes background-drift {

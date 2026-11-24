@@ -13,8 +13,10 @@ export function ArcadeBackground({ activePlayer }: Props) {
       data-player={activePlayer ?? "neutral"}
       aria-hidden="true"
     >
-      <div className="arcade-bg__color arcade-bg__color--p1" />
-      <div className="arcade-bg__color arcade-bg__color--p2" />
+      <div className="arcade-bg__front">
+        <div className="arcade-bg__color arcade-bg__color--p1" />
+        <div className="arcade-bg__color arcade-bg__color--p2" />
+      </div>
     </div>
   );
 }
