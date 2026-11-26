@@ -133,7 +133,7 @@ export const AFFIXES: AffixDef[] = [
     id: "frozen-assets",
     title: "Frozen Assets",
     polarity: "negative",
-    ready: true,
+    ready: false,
     desc: (p) => {
       const t = trailerOf(p);
       const l = leaderOf(p);
@@ -144,7 +144,7 @@ export const AFFIXES: AffixDef[] = [
     id: "veto-card",
     title: "Veto Card",
     polarity: "positive",
-    ready: true,
+    ready: false,
     desc: "Grants the ability to negate the 2-Agent elimination penalty.",
   },
 ];

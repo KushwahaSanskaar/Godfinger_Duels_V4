@@ -1,4 +1,5 @@
 import type { Agent, Mode, PlayerId } from "../types";
+import { agentArtUrl } from "../Logic/agentArt";
 import { MODES } from "../Data/modes";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Wipe } from "../Components/Wipe";
@@ -143,13 +144,13 @@ function Slot({
       >
         {showFilled ? (
           <img
-            src={`/agents/${agent!.art ?? agent!.id}.webp`}
+            src={agentArtUrl(agent!)}
             alt={agent!.name}
             className="w-full h-full object-cover object-center scale-150"
           />
         ) : showPending ? (
           <img
-            src={`/agents/${placeholder!.art ?? placeholder!.id}.webp`}
+            src={agentArtUrl(placeholder!)}
             alt={placeholder!.name}
             className="w-full h-full object-cover object-center scale-150 grayscale opacity-50"
           />

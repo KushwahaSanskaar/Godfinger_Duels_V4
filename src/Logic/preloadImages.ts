@@ -1,5 +1,6 @@
 import { AGENTS } from "../Data/agents";
 import { BOSS_POOL } from "../Data/bosses";
+import { INVITE_ART, agentArtUrl, agentFullArtUrl } from "./agentArt";
 
 const started = new Set<string>();
 const kept: HTMLImageElement[] = [];
@@ -15,10 +16,10 @@ function load(src: string) {
 
 export function preloadGameImages() {
   for (const a of AGENTS) {
-    const key = a.art ?? a.id;
-    load(`/agents/${key}.webp`);
-    load(`/agents/agents_full/${key}_full.webp`);
-    if (key !== a.id) load(`/agents/agents_full/${a.id}_full.webp`);
+    load(agentArtUrl(a));
+    load(agentFullArtUrl(a));
+    if (a.art && a.art !== a.id) load(`/agents/agents_full/${a.id}_full.webp`);
   }
+  load(`/agents/${INVITE_ART}.webp`); // shared by every Invitation
   for (const b of BOSS_POOL) load(`/bosses/${b.id}.webp`);
 }

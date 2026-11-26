@@ -1,4 +1,5 @@
 import { Agent } from "../types";
+import { agentArtUrl } from "../Logic/agentArt";
 import { HourglassIcon } from "./Icons";
 
 interface AgentCardProps {
@@ -28,7 +29,7 @@ export function AgentCard({
   tags = [],
   cooldownUsable = false,
 }: AgentCardProps) {
-  const imagePath = `/agents/${agent.art ?? agent.id}.webp`;
+  const imagePath = agentArtUrl(agent);
   const scale = Math.max(1, size / 112);
   const borderWidth = size >= 180 ? Math.min(9, Math.round(size / 28)) : 4;
 

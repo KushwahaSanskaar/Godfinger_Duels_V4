@@ -71,11 +71,13 @@ export interface RoundLogEntry {
 // "affix" / "modifier" are the between-round screens that come BEFORE the boss roll.
 // "reveal" = a secret modifier is announced after squad select, right before the round.
 // "preset" = Preset Teams: the random team that is actually played is shown.
+// "dejavu" = Deja Vu: each player builds a new team from the opponent's eliminated agents.
 export type RoundStage =
   | "boss"
   | "squad"
   | "reveal"
   | "preset"
+  | "dejavu"
   | "score"
   | "affix"
   | "modifier";

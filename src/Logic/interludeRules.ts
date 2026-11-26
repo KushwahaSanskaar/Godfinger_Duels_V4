@@ -238,14 +238,24 @@ export function rollModifier(
   );
 }
 
-// Deja Vu: a random team of 3 from everything that has been eliminated so far.
-// Both players play it. null when there aren't 3 different agents to draw from.
-export function rollDejaVuTeam(
+// Deja Vu: after the normal squads are locked, each player builds a NEW team of 3
+// out of the agents that were eliminated from their OPPONENT's roster.
+// A player whose opponent has lost fewer than 3 different agents is topped up from
+// the rest of the eliminated agents, so a team of 3 is always possible once the
+// modifier's minimum (4 different eliminated agents) is met.
+export const DEJA_VU_TEAM_SIZE = 3;
+
+export function dejaVuCandidates(
   pool: Record<PlayerId, Agent[]>,
-  rng: () => number = Math.random,
-): string[] | null {
-  const ids = eliminatedIds(pool);
-  return ids.length >= 3 ? sample(ids, 3, rng) : null;
+  forPlayer: PlayerId,
+): Agent[] {
+  const real = (list: Agent[]) => list.filter((a) => !isMorphItem(a.id));
+  const own = uniqueById(real(pool[otherPlayer(forPlayer)]));
+  if (own.length >= DEJA_VU_TEAM_SIZE) return own;
+  return uniqueById([
+    ...own,
+    ...real(pool[forPlayer]),
+  ]);
 }
 
 // ---------- Preset Teams ----------

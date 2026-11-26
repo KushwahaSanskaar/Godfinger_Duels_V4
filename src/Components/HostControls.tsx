@@ -43,7 +43,11 @@ export function HostControls({
         aria-label={paused ? "Play" : "Pause"}
         className={`${button} ${paused ? "bg-event text-ink hover:bg-event-hover" : ""}`}
       >
-        {paused ? <PlayIcon className="w-5 h-5" /> : <PauseIcon className="w-5 h-5" />}
+        {paused ? (
+          <PlayIcon className="w-5 h-5" />
+        ) : (
+          <PauseIcon className="w-5 h-5" />
+        )}
       </button>
     </Panel>
   );

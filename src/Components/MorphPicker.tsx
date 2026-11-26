@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Agent, PlayerId } from "../types";
+import { agentFullArtUrl } from "../Logic/agentArt";
 import { CLASS_GROUPS } from "../Data/modes";
 import { AgentCard } from "./AgentCard";
 import { Panel } from "./Panel";
@@ -153,7 +154,7 @@ export function MorphPicker({
               {selected ? (
                 <img
                   key={selected.id}
-                  src={`/agents/agents_full/${selected.art ?? selected.id}_full.webp`}
+                  src={agentFullArtUrl(selected)}
                   alt={selected.name}
                   draggable={false}
                   className="h-full w-full object-cover object-top"

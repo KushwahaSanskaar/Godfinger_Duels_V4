@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Agent, PendingRemoval, PlayerId } from "../types";
+import { agentFullArtUrl } from "../Logic/agentArt";
 import { AgentCard } from "../Components/AgentCard";
 import { Notice } from "../Components/Notice";
 import { Panel } from "../Components/Panel";
@@ -484,7 +485,7 @@ function PlayerColumn({
                   {agent && shown ? (
                     <>
                       <img
-                        src={`/agents/agents_full/${shown.agent.art ?? shown.agent.id}_full.webp`}
+                        src={agentFullArtUrl(shown.agent)}
                         alt={shown.agent.name}
                         loading="eager"
                         draggable={false}

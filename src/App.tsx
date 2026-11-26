@@ -250,6 +250,12 @@ export default function App() {
                   presetTeam={game.presetTeam}
                   veto={game.veto}
                   onAcknowledgePreset={game.acknowledgePreset}
+                  dejaVuPicks={game.dejaVuPicks}
+                  dejaVuLocked={game.dejaVuLocked}
+                  dejaVuCandidates={game.dejaVuCandidates}
+                  onToggleDejaVu={game.toggleDejaVuPick}
+                  onConfirmDejaVu={game.confirmDejaVu}
+                  onDejaVuTimeout={game.autoResolveDejaVu}
                   squadPlan={game.squadPlan}
                   battleSquads={game.battleSquads}
                   morphChoices={game.morphChoices}

@@ -53,7 +53,8 @@ import {
   ownRevivable,
   rollAffixOffer,
   rollModifier,
-  rollDejaVuTeam,
+  dejaVuCandidates as dejaVuCandidatesFor,
+  DEJA_VU_TEAM_SIZE,
   rollPresetTeam,
   rollTunnelVision,
   takeFromPool,
@@ -212,6 +213,19 @@ export function useGameState() {
   // Preset Teams: the team rolled after the reveal. Both players play it; the squads
   // they picked before stay in `squads` and are what the round's consequences hit.
   const [presetTeam, setPresetTeam] = useTracked<string[] | null>(null);
+  // Deja Vu: each player's new team, built from the opponent's eliminated agents.
+  const [dejaVuPicks, setDejaVuPicks] = useTracked<Record<PlayerId, string[]>>({
+    p1: [],
+    p2: [],
+  });
+  const [dejaVuLocked, setDejaVuLocked] = useTracked<Record<PlayerId, boolean>>({
+    p1: false,
+    p2: false,
+  });
+  const [dejaVuTeams, setDejaVuTeams] = useTracked<Record<
+    PlayerId,
+    string[]
+  > | null>(null);
   const [squads, setSquads] = useTracked<Record<PlayerId, string[]>>({
     p1: [],
     p2: [],
@@ -854,19 +868,72 @@ export function useGameState() {
       return;
     }
     if (roundEffects.modifier?.id === "deja-vu") {
-      // same screen and rules as Preset Teams, but drawn from the eliminated agents
-      const team = memoRoll(
-        `dejavu:${round}:${roundAttempt}`,
-        { elim: eliminatedIds(eliminatedPool) },
-        () => rollDejaVuTeam(eliminatedPool),
+      // The locked-in squads are set aside (they are still what a loss costs).
+      // Each player now builds a new team from the opponent's eliminated agents.
+      const enough = (["p1", "p2"] as PlayerId[]).every(
+        (p) => dejaVuCandidates(p).length >= DEJA_VU_TEAM_SIZE,
       );
-      if (team) {
-        setPresetTeam(team);
-        setRoundStage("preset");
+      if (enough) {
+        setDejaVuPicks({ p1: [], p2: [] });
+        setDejaVuLocked({ p1: false, p2: false });
+        setDejaVuTeams(null);
+        setRoundStage("dejavu");
         return;
       }
     }
     beginScore();
+  }
+
+  // ----- Deja Vu team building -----
+
+  function dejaVuCandidates(p: PlayerId): Agent[] {
+    return dejaVuCandidatesFor(eliminatedPool, p);
+  }
+
+  function toggleDejaVuPick(p: PlayerId, agentId: string) {
+    if (roundStage !== "dejavu" || dejaVuLocked[p]) return;
+    if (!dejaVuCandidates(p).some((a) => a.id === agentId)) return;
+    setDejaVuPicks((picks) => {
+      const cur = picks[p];
+      if (cur.includes(agentId))
+        return { ...picks, [p]: cur.filter((id) => id !== agentId) };
+      if (cur.length >= DEJA_VU_TEAM_SIZE) return picks;
+      return { ...picks, [p]: [...cur, agentId] };
+    });
+  }
+
+  // Locks `team` in for `p`. Functional updates, because both players' clocks can run
+  // out in the same tick and neither lock may overwrite the other.
+  function lockDejaVu(p: PlayerId, team: string[]) {
+    setDejaVuPicks((picks) => ({ ...picks, [p]: team }));
+    setDejaVuLocked((locked) => ({ ...locked, [p]: true }));
+  }
+
+  // Both teams are locked: the score screen opens.
+  useEffect(() => {
+    if (roundStage !== "dejavu" || !dejaVuLocked.p1 || !dejaVuLocked.p2) return;
+    if (!claimTurn(`dejavu:${round}:${roundAttempt}`)) return;
+    setDejaVuTeams(dejaVuPicks);
+    beginScore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roundStage, dejaVuLocked]);
+
+  function confirmDejaVu(p: PlayerId) {
+    if (roundStage !== "dejavu" || dejaVuLocked[p]) return;
+    if (dejaVuPicks[p].length !== DEJA_VU_TEAM_SIZE) return;
+    lockDejaVu(p, dejaVuPicks[p]);
+  }
+
+  // Time ran out: keep what was picked and fill the rest at random.
+  function autoResolveDejaVu(p: PlayerId) {
+    if (roundStage !== "dejavu" || dejaVuLocked[p]) return;
+    const team = [...dejaVuPicks[p]];
+    const rest = dejaVuCandidates(p).filter((a) => !team.includes(a.id));
+    while (team.length < DEJA_VU_TEAM_SIZE && rest.length > 0) {
+      const [pick] = rest.splice(Math.floor(Math.random() * rest.length), 1);
+      team.push(pick.id);
+    }
+    lockDejaVu(p, team);
   }
 
   function acknowledgePreset() {
@@ -906,6 +973,9 @@ export function useGameState() {
     setForcedPick({ p1: null, p2: null });
     setMorphChoices({ p1: {}, p2: {} });
     setPresetTeam(null);
+    setDejaVuPicks({ p1: [], p2: [] });
+    setDejaVuLocked({ p1: false, p2: false });
+    setDejaVuTeams(null);
   }
 
   function confirmBossAndBeginSquad() {
@@ -1350,14 +1420,10 @@ export function useGameState() {
     setPendingRoundWinner(other(loser));
 
     // Removal takes `count` agents; a loser who couldn't field a full squad
-    // afterwards has lost the match.
+    // afterwards has lost the match. A Veto Card does NOT prevent that: it only
+    // spares the agents of a loser who could afford the removal anyway.
     if (
-      !veto[loser] && // a Veto Card can be used instead of the removal
-      lossEndsMatch(
-        rosters[loser].length,
-        cfg.minRoster,
-        removalCountFor(loser),
-      )
+      lossEndsMatch(rosters[loser].length, cfg.minRoster, removalCountFor(loser))
     ) {
       setWinner(other(loser));
       setPhase("gameover");
@@ -1387,7 +1453,6 @@ export function useGameState() {
     setPendingRoundWinner(null); // nobody won this round
 
     if (
-      !veto.p1 &&
       lossEndsMatch(rosters.p1.length, cfg.minRoster, removalCountFor("p1"))
     ) {
       setWinner("p2");
@@ -1395,7 +1460,6 @@ export function useGameState() {
       return;
     }
     if (
-      !veto.p2 &&
       lossEndsMatch(rosters.p2.length, cfg.minRoster, removalCountFor("p2"))
     ) {
       setWinner("p1");
@@ -1436,6 +1500,16 @@ export function useGameState() {
     }
     setRound((r) => r + 1);
     return false;
+  }
+
+  // Both players are down to the minimum roster (3 agents): nothing left to trade,
+  // so the match skips straight to the Sudden Death round (the last regulation round).
+  function skipsToSuddenDeath(rosters: Record<PlayerId, Agent[]>): boolean {
+    return (
+      round + 1 < cfg.rounds &&
+      rosters.p1.length <= cfg.minRoster &&
+      rosters.p2.length <= cfg.minRoster
+    );
   }
 
   function finishRoundAndAdvance(
@@ -1499,6 +1573,11 @@ export function useGameState() {
     setCurrentBoss(null);
 
     if (proceedAfterRound()) return;
+    if (skipsToSuddenDeath(projected.rosters)) {
+      setRound(cfg.rounds); // skipped rounds and their affix / modifier screens are dropped
+      startInterlude([], null);
+      return;
+    }
     // Between rounds: affix / modifier screens, then the boss roll.
     startInterlude(cfg.interludes[round] ?? [], {
       rosters: projected.rosters,
@@ -2053,6 +2132,9 @@ export function useGameState() {
     setCurrentBoss(null);
     setBossChances(initialBossChances());
     setPresetTeam(null);
+    setDejaVuPicks({ p1: [], p2: [] });
+    setDejaVuLocked({ p1: false, p2: false });
+    setDejaVuTeams(null);
     setSquads({ p1: [], p2: [] });
     setSquadsConfirmed({ p1: false, p2: false });
     setGrayedOut({ p1: {}, p2: {} });
@@ -2118,6 +2200,7 @@ export function useGameState() {
     roundLog.length,
     squadsConfirmed,
     controlLocked,
+    dejaVuLocked,
     submitted,
     swapped,
     pendingRemovals.length,
@@ -2173,11 +2256,14 @@ export function useGameState() {
   }
   const battleSquads: Record<PlayerId, string[]> = presetTeam
     ? { p1: presetTeam, p2: presetTeam }
-    : swapped
+    : dejaVuTeams
+      ? dejaVuTeams
+      : swapped
       ? { p1: squads.p2, p2: squads.p1 }
       : squads;
   // morph forms belong to whoever built the squad, so they swap along with it
-  const battleMorphs: Record<PlayerId, Record<string, string>> = presetTeam
+  const battleMorphs: Record<PlayerId, Record<string, string>> =
+    presetTeam || dejaVuTeams
     ? { p1: {}, p2: {} }
     : swapped
       ? { p1: morphChoices.p2, p2: morphChoices.p1 }
@@ -2244,6 +2330,12 @@ export function useGameState() {
     morphChoices,
     battleMorphs,
     presetTeam,
+    dejaVuPicks,
+    dejaVuLocked,
+    dejaVuCandidates,
+    toggleDejaVuPick,
+    confirmDejaVu,
+    autoResolveDejaVu,
     veto,
     acknowledgePreset,
     morphOptionsFor,

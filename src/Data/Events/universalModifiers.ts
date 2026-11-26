@@ -9,7 +9,8 @@ export interface ModifierDef {
   // hidden through the boss roll and squad select and are revealed right before the
   // round starts.
   secret?: boolean;
-  // Only rolls once at least this many different Agents have been eliminated in total.
+  // Only rolls once at least this many different Agents have been eliminated in total
+  // (counted across both rosters).
   minEliminated?: number;
   desc: string;
   ready: boolean;
@@ -65,8 +66,8 @@ export const UNIVERSAL_MODIFIERS: ModifierDef[] = [
     title: "Deja Vu",
     flair: "???",
     secret: true,
-    minEliminated: 3,
-    desc: "Disregard locked-in squads. Both players must assemble a new squad using the opponent's eliminated Agents.",
+    minEliminated: 4, // "more than 3" different Agents eliminated from both rosters
+    desc: "Disregard locked-in squads. Each player must assemble a new squad from the Agents eliminated from their opponent's roster.",
     ready: true,
   },
 ];

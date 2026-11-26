@@ -10,6 +10,7 @@
 // To add another item, call add() once below. An item's id doubles as its roster id.
 
 import type { Agent } from "../types";
+import { INVITE_ART } from "../Logic/agentArt";
 
 export interface MorphItem {
   agent: Agent; // what sits in the roster
@@ -19,7 +20,12 @@ export interface MorphItem {
   note: string; // one line shown in the popup
 }
 
-function wildcard(id: string, name: string, tag: string): Agent {
+function wildcard(
+  id: string,
+  name: string,
+  tag: string,
+  art: string = "soul-stone", // Soul Stones use the Soul Stone artwork
+): Agent {
   return {
     id,
     name,
@@ -30,7 +36,7 @@ function wildcard(id: string, name: string, tag: string): Agent {
     faction: "N/A",
     rarity: "Unique",
     price: 0,
-    art: "soul-stone", // all of these share the Soul Stone artwork
+    art,
     tag,
   };
 }
@@ -88,6 +94,7 @@ INVITATION_CLASSES.forEach((c) => {
       `${c.key}-invitation`,
       `${c.label} Invitation`,
       `${c.tag} INV`,
+      INVITE_ART,
     ),
     specialties: c.specialties,
     plus: false,
@@ -99,6 +106,7 @@ INVITATION_CLASSES.forEach((c) => {
       `${c.key}-invitation-plus`,
       `${c.label} Invitation+`,
       `${c.tag} INV+`,
+      INVITE_ART,
     ),
     specialties: c.specialties,
     plus: true,

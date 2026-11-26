@@ -2,6 +2,7 @@ import { useTurnTimer } from "../Hooks/useTurnTimer";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { Agent, PlayerId, RoundEffects } from "../types";
+import { agentFullArtUrl } from "../Logic/agentArt";
 import { AgentCard } from "../Components/AgentCard";
 import { MorphPicker } from "../Components/MorphPicker";
 import { MORPH_ITEMS, displayForm, isMorphItem } from "../Data/morphItems";
@@ -468,7 +469,7 @@ function SquadColumn({
                   <>
                     {index < litSlots ? (
                       <img
-                        src={`/agents/agents_full/${shown!.agent.art ?? shown!.agent.id}_full.webp`}
+                        src={agentFullArtUrl(shown!.agent)}
                         alt={shown!.agent.name}
                         draggable={false}
                         className="absolute inset-0 h-full w-full object-cover object-top"
@@ -477,8 +478,8 @@ function SquadColumn({
                       <div
                         className="absolute inset-0 bg-plate"
                         style={{
-                          WebkitMaskImage: `url(/agents/agents_full/${shown!.agent.art ?? shown!.agent.id}_full.webp)`,
-                          maskImage: `url(/agents/agents_full/${shown!.agent.art ?? shown!.agent.id}_full.webp)`,
+                          WebkitMaskImage: `url(${agentFullArtUrl(shown!.agent)})`,
+                          maskImage: `url(${agentFullArtUrl(shown!.agent)})`,
                           WebkitMaskSize: "cover",
                           maskSize: "cover",
                           WebkitMaskPosition: "top",

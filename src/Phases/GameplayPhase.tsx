@@ -18,6 +18,7 @@ import { ScoreSubmit } from "./ScoreSubmit";
 import { AffixScreen } from "./AffixScreen";
 import { ModifierScreen } from "./ModifierScreen";
 import { PresetScreen } from "./PresetScreen";
+import { DejaVuScreen } from "./DejaVuScreen";
 import { UNIVERSAL_MODIFIERS, SECRET_HINTS } from "../Data/Events/universalModifiers";
 import { Notice } from "../Components/Notice";
 
@@ -96,6 +97,12 @@ interface GameplayPhaseProps {
   presetTeam: string[] | null;
   veto: Record<PlayerId, boolean>;
   onAcknowledgePreset: () => void;
+  dejaVuPicks: Record<PlayerId, string[]>;
+  dejaVuLocked: Record<PlayerId, boolean>;
+  dejaVuCandidates: (player: PlayerId) => Agent[];
+  onToggleDejaVu: (player: PlayerId, agentId: string) => void;
+  onConfirmDejaVu: (player: PlayerId) => void;
+  onDejaVuTimeout: (player: PlayerId) => void;
 }
 
 export function GameplayPhase({
@@ -158,6 +165,12 @@ export function GameplayPhase({
   presetTeam,
   veto,
   onAcknowledgePreset,
+  dejaVuPicks,
+  dejaVuLocked,
+  dejaVuCandidates,
+  onToggleDejaVu,
+  onConfirmDejaVu,
+  onDejaVuTimeout,
 }: GameplayPhaseProps) {
   // Set during render (not in an effect) so Squad Select is never unmounted in between.
   const [lastStage, setLastStage] = useState(roundStage);
@@ -227,6 +240,22 @@ export function GameplayPhase({
       );
   }
 
+  // Deja Vu: each player builds a new team from the opponent's eliminated agents.
+  if (roundStage === "dejavu" && !squadOutro) {
+    return (
+      <DejaVuScreen
+        round={round}
+        picks={dejaVuPicks}
+        locked={dejaVuLocked}
+        candidatesFor={dejaVuCandidates}
+        displayName={displayName}
+        onToggle={onToggleDejaVu}
+        onConfirm={onConfirmDejaVu}
+        onTimeout={onDejaVuTimeout}
+      />
+    );
+  }
+
   // Preset Teams: the rolled team that is actually played.
   if (roundStage === "preset" && presetTeam && !squadOutro) {
     return (
@@ -235,11 +264,7 @@ export function GameplayPhase({
         title={(
           UNIVERSAL_MODIFIERS.find((m) => m.id === effects.modifier?.id)?.title ?? "PRESET TEAM"
         ).toUpperCase()}
-        subtitle={
-          effects.modifier?.id === "deja-vu"
-            ? "A TEAM FROM THE ELIMINATED AGENTS"
-            : "BOTH PLAYERS FIGHT WITH THIS TEAM"
-        }
+        subtitle="BOTH PLAYERS FIGHT WITH THIS TEAM"
         squads={squads}
         lookup={[...rosters.p1, ...rosters.p2, ...pool]}
         morphs={morphChoices}
